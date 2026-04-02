@@ -31,10 +31,6 @@ st.markdown(
     unsafe_allow_html=True,
 )
 
-with st.container():
-    st.sidebar.caption(f"Versión: {get_version()}", text_alignment="center")
-
-
 # 1. Al principio de tu app (o donde manejes la navegación)
 if "app_closing" not in st.session_state:
     st.session_state.app_closing = False
@@ -53,7 +49,7 @@ if st.session_state.app_closing:
 
     st.write("#")
     st.success("### 🔒 Sesión Finalizada")
-    st.write("La aplicación de **INVICO** se ha detenido correctamente.")
+    st.write("La aplicación de **ICARO** se ha detenido correctamente.")
     st.info("Ya puedes cerrar esta ventana del navegador.")
 
     time.sleep(1)
@@ -82,11 +78,12 @@ def build_navigation() -> None:
         st.error("Sesión no iniciada.")
         return
 
-    role = st.session_state["user"].get("role", "viewer")
+    role = st.session_state["user"].get("role", "pending")
+    username = st.session_state["user"].get("username", "Usuario")
 
     # 1. Definimos la lista base de páginas
     pages = [
-        st.Page("src/pages/controles/control_recursos.py", title="Home", icon="🏠"),
+        st.Page("src/pages/home.py", title="Home", icon="🏠"),
         st.Page(
             "src/pages/controles/control_icaro.py", title="Control Icaro", icon="🏗️"
         ),
@@ -117,42 +114,48 @@ def build_navigation() -> None:
     # Al pasar una lista, Streamlit no crea encabezados de sección
     pg = st.navigation(pages)
 
-    # 2. Crear un "Header" en la parte superior de la página
-    with st.container(
-        vertical_alignment="center", height="stretch", gap=None, horizontal=False
-    ):
-        with st.container(
-            horizontal=True, vertical_alignment="bottom", horizontal_alignment="right"
-        ):
-            with st.container(width="content"):
-                st.write(f"👤 **{st.session_state['user']['username']}**")
-            with st.container(width="content"):
-                if st.button("Log out", width="stretch"):
-                    # 1.Activamos el interruptor
-                    st.session_state.app_closing = True
-
-                    # 2. Limpiamos la sesión para seguridad
-                    st.session_state["token"] = None
-                    st.session_state["user"] = None
-
-                    # 3. Forzamos el rerun para que entre en la pantalla de cierre
-                    st.rerun()
+    # 3. Sidebar: Info de usuario y Logout
+    with st.sidebar:
+        # Generamos espacio en blanco dinámico
+        # Si tienes 6 páginas, unos 12 a 15 st.write("") suelen bastar
+        # para mandarlo al fondo en una pantalla estándar.
+        for _ in range(15):
+            st.write("")
 
         st.divider()
 
+        # Bloque de Usuario
+        cols = st.columns([0.6, 0.4], vertical_alignment="center")
+        cols[0].write(f"👤 **{username}**")
+
+        if cols[1].button("Log out", key="logout_spacer"):
+            st.session_state.app_closing = True
+            st.session_state["token"] = None
+            st.session_state["user"] = None
+            st.rerun()
+
+        with st.container():
+            st.sidebar.caption(f"Versión: {get_version()}", text_alignment="center")
+
+    # 4. CSS para eliminar el espacio que dejó el Header anterior
+    st.markdown(
+        """
+        <style>
+            .block-container {
+                padding-top: 1rem !important; /* Espacio mínimo arriba */
+                margin-top: -3rem !important;
+            }
+            /* Mantenemos el botón del sidebar visible pero bajamos el header */
+            .stAppHeader {
+                background-color: transparent !important;
+            }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     # 3. Ejecutar la página
     pg.run()
-
-    # # ── Sidebar inferior: info de usuario y logout ──
-    # with st.sidebar:
-    #     st.divider()
-    #     username = st.session_state["user"]["username"]
-    #     st.caption(f"👤 {username} ({role})")
-
-    #     if st.button("Cerrar Sesión", width="stretch"):
-    #         st.session_state["token"] = None
-    #         st.session_state["user"] = None
-    #         st.rerun()
 
 
 # ──────────────────────────────────────────────
@@ -160,15 +163,6 @@ def build_navigation() -> None:
 # ──────────────────────────────────────────────
 def main() -> None:
     initialize_state()
-
-    # TEMPORARY: Bypass Login para desarrollo
-    # if not st.session_state.get("token"):
-    #     st.session_state["token"] = "dev-bypass-token"
-    #     st.session_state["user"] = {
-    #         "role": "admin",
-    #         "username": "developer",
-    #         "id": "1",
-    #     }
 
     if not st.session_state["token"]:
         render_login()
