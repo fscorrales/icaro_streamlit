@@ -143,7 +143,6 @@ def build_navigation() -> None:
         <style>
             .block-container {
                 padding-top: 1rem !important; /* Espacio mínimo arriba */
-                margin-top: -3rem !important;
             }
             /* Mantenemos el botón del sidebar visible pero bajamos el header */
             .stAppHeader {
