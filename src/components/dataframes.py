@@ -29,7 +29,6 @@ def dataframe(data, key: str = "df", **kwargs):
             data,
             key=key,
             width="stretch",
-            column_config=column_config,
             hide_index=True,
             **kwargs,
         )
