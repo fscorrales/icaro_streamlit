@@ -84,16 +84,12 @@ def build_navigation() -> None:
     # 1. Definimos la lista base de páginas
     pages = [
         st.Page("src/pages/home.py", title="Home", icon="🏠"),
+        st.Page("src/pages/estructura.py", title="Estructura", icon="🏢"),
+        st.Page("src/pages/obras.py", title="Control Obras", icon="🏘️"),
         st.Page(
-            "src/pages/controles/control_icaro.py", title="Control Icaro", icon="🏗️"
-        ),
-        st.Page(
-            "src/pages/controles/control_obras.py", title="Control Obras", icon="🔨"
-        ),
-        st.Page(
-            "src/pages/controles/control_honorarios.py",
-            title="Control Honorarios",
-            icon="📋",
+            "src/pages/proveedores.py",
+            title="Proveedores",
+            icon="👷‍♂️",
         ),
         st.Page(
             "src/pages/controles/control_haberes.py", title="Control Haberes", icon="👤"

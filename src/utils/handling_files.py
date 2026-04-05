@@ -23,9 +23,9 @@ def get_df_from_sql_table(sqlite_path: str, table: str) -> pd.DataFrame:
 
 
 # --------------------------------------------------
-def read_xls(PATH: str, header: int = None) -> pd.DataFrame:
+def read_xls(PATH: str, header: int = 0) -> pd.DataFrame:
     """ "Read from xls report"""
     df = pd.read_excel(PATH, index_col=None, header=header, na_filter=False, dtype=str)
-    if header is None:
+    if header == 0:
         df.columns = [str(x) for x in range(df.shape[1])]
     return df
