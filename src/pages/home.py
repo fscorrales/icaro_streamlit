@@ -8,7 +8,6 @@ import streamlit as st
 
 from src.components import (
     button_export,
-    dataframe,
     multiselect_filter,
     text_input_advance_filter,
 )
@@ -19,7 +18,12 @@ from src.services.api_client import (
     fetch_dataframe,
     fetch_excel_stream,
 )
-from src.views.aux_tables import params_preparation
+from src.views import (
+    home_carga,
+    home_imputaciones,
+    home_retenciones,
+    params_preparation,
+)
 
 REPORTE = "home"
 
@@ -165,46 +169,7 @@ def icaro_carga_template(
 
     # 4. Mostrar resultados (usando session_state para que no desaparezcan)
     if not df_carga.empty:
-        with st.container(horizontal=False, border=True, width="stretch"):
-            event = dataframe(
-                df_carga,
-                key=f"df_carga_{key}",
-                height=200,
-                on_select="rerun",
-                selection_mode="single-row",
-                column_order=[
-                    "mes",
-                    "fecha",
-                    "id_carga",
-                    # "nro_comprobante",
-                    "tipo",
-                    "fuente",
-                    "cta_cte",
-                    "importe",
-                    "desc_obra",
-                    # "fondo_reparo",
-                    "avance",
-                    "nro_certificado",
-                    "cuit",
-                    "origen",
-                ],
-                column_config={
-                    "fecha": st.column_config.DateColumn(
-                        "fecha",
-                        format="DD/MM/YYYY",  # O el formato que prefieras
-                    ),
-                    "nro_certificado": st.column_config.TextColumn("cert"),
-                },
-            )
-            with st.container(horizontal=True, border=False, width="stretch"):
-                if st.button("Autocarga", key=f"btn_autocarga_df_carga_{key}"):
-                    pass
-                if st.button("Carga Manual", key=f"btn_carga_manual_df_carga_{key}"):
-                    pass
-                if st.button("Editar", key=f"btn_editar_carga_df_carga_{key}"):
-                    pass
-                if st.button("Borrar", key=f"btn_borrar_df_carga_{key}"):
-                    pass
+        event = home_carga(df_carga, key)
 
         # 2. Lógica de filtrado dinámico
         # Verificamos si hay alguna fila seleccionada
@@ -214,44 +179,11 @@ def icaro_carga_template(
             selected_id = df_carga.iloc[selected_row_index]["id_carga"]
 
             # st.info(f"Mostrando detalles para ID Carga: **{selected_id}**")
-            df_ret_filtrado = df_ret[df_ret["id_carga"] == selected_id]
-            df_carga_filtrado = df_carga[df_carga["id_carga"] == selected_id]
             with st.container(horizontal=True, border=False, width="stretch"):
-                with st.container(horizontal=False, border=True, width="stretch"):
-                    dataframe(
-                        df_carga_filtrado,
-                        key=f"df_imp_{key}",
-                        height=150,
-                        column_order=[
-                            "actividad",
-                            "partida",
-                            "importe",
-                        ],
-                    )
-                    with st.container(horizontal=True, border=False, width="stretch"):
-                        if st.button("Agregar", key=f"btn_agregar_df_imp_{key}"):
-                            pass
-                        if st.button("Editar", key=f"btn_editar_df_imp_{key}"):
-                            pass
-                        if st.button("Borrar", key=f"btn_borrar_df_imp_{key}"):
-                            pass
-                with st.container(horizontal=False, border=True, width="stretch"):
-                    dataframe(
-                        df_ret_filtrado,
-                        key=f"df_ret_{key}",
-                        height=150,
-                        column_order=[
-                            "codigo",
-                            "importe",
-                        ],
-                    )
-                    with st.container(horizontal=True, border=False, width="stretch"):
-                        if st.button("Agregar", key=f"btn_agregar_df_ret_{key}"):
-                            pass
-                        if st.button("Editar", key=f"btn_editar_df_ret_{key}"):
-                            pass
-                        if st.button("Borrar", key=f"btn_borrar_df_ret_{key}"):
-                            pass
+                df_ret_filtrado = df_ret[df_ret["id_carga"] == selected_id]
+                df_carga_filtrado = df_carga[df_carga["id_carga"] == selected_id]
+                home_imputaciones(df_carga_filtrado, key)
+                home_retenciones(df_ret_filtrado, key)
 
 
 if __name__ == "__main__":
