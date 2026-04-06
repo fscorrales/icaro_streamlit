@@ -1,4 +1,14 @@
+__all__ = [
+    "get_ejercicios_list",
+    "get_tipos_comprobantes_siif_list",
+    "get_grupos_partidas_siif_list",
+    "get_partidas_principales_siif_list",
+    "get_ctas_ctes_df",
+    "get_ctas_ctes_list",
+]
+
 import datetime as dt
+from typing import Any
 
 import pandas as pd
 import streamlit as st
@@ -15,19 +25,19 @@ def get_ejercicios_list() -> list[int]:
 
 @st.cache_data
 # --------------------------------------------------
-def get_tipos_comprobantes_siif_list() -> list[str]:
+def get_tipos_comprobantes_siif_list() -> list[dict[str, Any]]:
     return fetch_data(Endpoints.SIIF.value + "/tiposComprobantes")
 
 
 @st.cache_data
 # --------------------------------------------------
-def get_grupos_partidas_siif_list() -> list[str]:
+def get_grupos_partidas_siif_list() -> list[dict[str, Any]]:
     return fetch_data(Endpoints.SIIF.value + "/gruposPartidas")
 
 
 @st.cache_data
 # --------------------------------------------------
-def get_partidas_principales_siif_list() -> list[str]:
+def get_partidas_principales_siif_list() -> list[dict[str, Any]]:
     return fetch_data(Endpoints.SIIF.value + "/partidasPrincipales")
 
 

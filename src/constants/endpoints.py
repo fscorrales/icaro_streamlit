@@ -1,3 +1,5 @@
+__all__ = ["Endpoints"]
+
 from enum import Enum
 
 
