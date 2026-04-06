@@ -1,4 +1,3 @@
-import itertools
 from typing import Any, Optional
 
 import pandas as pd
@@ -14,6 +13,21 @@ from src.services.api_client import (
     fetch_dataframe,
     fetch_excel_stream,
 )
+
+
+# --------------------------------------------------
+def params_preparation(selections: list, filtro_avanzado: str):
+    """
+    Función auxiliar para preparar los parámetros de la API a partir de las selecciones y el filtro avanzado.
+    Devuelve un diccionario listo para ser usado en la petición.
+    """
+    params_peticion = {"limit": 0, "queryFilter": filtro_avanzado}
+
+    for nombre_param, valores in selections:
+        if valores:
+            params_peticion[nombre_param] = ",".join(map(str, valores))
+
+    return params_peticion
 
 
 @st.fragment  # Permite que los filtros internos no recarguen TODA la página
@@ -47,29 +61,18 @@ def report_template(
                 if f"temp_file_{key}" in st.session_state:
                     del st.session_state[f"temp_file_{key}"]
                 with st.spinner("Preparando archivos Excel..."):
-                    # REPETIMOS LÓGICA DE FILTROS:
-                    listas_valores = [s[1] for s in selections]
-                    nombres_params = [s[0] for s in selections]
+                    # Llamada a la API que devuelve StreamingResponse
+                    excel_binario = fetch_excel_stream(
+                        f"{endpoint}/export",
+                        params_preparation(selections, filtro_avanzado),
+                    )
 
-                    # Para simplificar, si el usuario exporta, quizás quieras
-                    # mandarle un solo Excel con la combinación actual o iterar.
-                    # Aquí asumo que mandas el primer set de filtros o el consolidado:
-                    for combinacion in itertools.product(*listas_valores):
-                        params_peticion = dict(zip(nombres_params, combinacion))
-                        params_peticion["queryFilter"] = filtro_avanzado
-
-                        # Llamada a la API que devuelve StreamingResponse
-                        excel_binario = fetch_excel_stream(
-                            f"{endpoint}/export", params_peticion
-                        )
-
-                        if excel_binario:
-                            # IMPORTANTE: Como st.download_button recarga la página,
-                            # a veces es mejor usar un link o guardarlo en session_state
-                            st.session_state[f"temp_file_{key}"] = excel_binario
-                            st.success("✅ Archivo generado con éxito.")
-                            st.rerun()
-                        break  # Si solo quieres el primer set, o ajusta según tu necesidad
+                    if excel_binario:
+                        # IMPORTANTE: Como st.download_button recarga la página,
+                        # a veces es mejor usar un link o guardarlo en session_state
+                        st.session_state[f"temp_file_{key}"] = excel_binario
+                        st.success("✅ Archivo generado con éxito.")
+                        st.rerun()
 
             except Exception as e:
                 st.error(f"Error al exportar: {e}")
@@ -125,42 +128,15 @@ def report_template(
     # 3. Lógica de Fetch Iterativo (El equivalente al v-for de Vue + API calls)
     try:
         with st.spinner("Consultando datos..."):
-            df_final = pd.DataFrame()
+            df_final = fetch_dataframe(
+                endpoint, params=params_preparation(selections, filtro_avanzado)
+            )
 
-            # Extraemos solo las listas de valores: [[2023, 2024], ["Salud", "Educación"]]
-            listas_valores = [s[1] for s in selections]
-            # Extraemos los nombres de los parámetros: ["ejercicio", "unidad_id"]
-            nombres_params = [s[0] for s in selections]
-
-            # Si permitimos que no haya filtros y todas las listas están vacías,
-            # debemos forzar al menos una ejecución con params vacíos.
-            if allow_no_filters and all(not lista for lista in listas_valores):
-                params_peticion = {"limit": 0, "queryFilter": filtro_avanzado}
-                df_final = fetch_dataframe(endpoint, params=params_peticion)
-            else:
-                # Si hay filtros, usamos la lógica de combinaciones
-                # Pero ojo: product con una lista vacía devuelve nada.
-                # Aseguramos que las listas vacías tengan al menos un [None]
-                # si queremos que la combinación siga funcionando.
-                listas_limpias = [l if l else [None] for l in listas_valores]
-                # itertools.product genera todas las combinaciones posibles:
-                # (2023, "Salud"), (2023, "Educación"), (2024, "Salud"), ...
-                for combinacion in itertools.product(*listas_limpias):
-                    # Creamos el diccionario de params para esta petición específica
-                    params_peticion = dict(zip(nombres_params, combinacion))
-                    params_peticion["limit"] = 0
-                    params_peticion["queryFilter"] = filtro_avanzado
-
-                    # DEBUG: Mostrar en la app (puedes borrarlo después)
-                    # print(f"DEBUG API CALL [{endpoint}]: {params_peticion}")
-                    # st.info(f"Enviando a API: {params_peticion}")
-
-                    # Hacemos el fetch individual
-                    df_parcial = fetch_dataframe(endpoint, params=params_peticion)
-                    df_final = pd.concat([df_final, df_parcial], ignore_index=True)
-
-            if df_final.empty:
+            if df_final is None or df_final.empty:
                 st.info("No se encontraron resultados.")
+                st.session_state[f"data_{key}"] = (
+                    pd.DataFrame()
+                )  # Evita errores de 'None' después
             else:
                 st.session_state[f"data_{key}"] = df_final
 
