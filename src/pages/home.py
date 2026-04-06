@@ -20,6 +20,7 @@ from src.services.api_client import (
     fetch_dataframe,
     fetch_excel_stream,
 )
+from src.views.aux_tables import params_preparation
 
 REPORTE = "home"
 
@@ -30,35 +31,16 @@ def get_data_carga(selections: list, filtro_avanzado: str = ""):
     df_carga = pd.DataFrame()
     df_ret = pd.DataFrame()
 
-    # Extraemos solo las listas de valores: [[2023, 2024], ["Salud", "Educación"]]
-    listas_valores = [s[1] for s in selections]
-    # Extraemos los nombres de los parámetros: ["ejercicio", "unidad_id"]
-    nombres_params = [s[0] for s in selections]
+    params_peticion = params_preparation(
+        selections, filtro_avanzado
+    )  # Preparamos los parámetros para la API
 
-    # itertools.product genera todas las combinaciones posibles:
-    # (2023, "Salud"), (2023, "Educación"), (2024, "Salud"), ...
-    for combinacion in itertools.product(*listas_valores):
-        # Creamos el diccionario de params para esta petición específica
-        params_peticion = dict(zip(nombres_params, combinacion))
-        params_peticion["limit"] = 0
-        params_peticion["queryFilter"] = filtro_avanzado
+    # Hacemos el fetch individual
+    # Tabla CARGA
+    df_carga = fetch_dataframe(Endpoints.ICARO_CARGA.value, params=params_peticion)
 
-        # DEBUG: Mostrar en la app (puedes borrarlo después)
-        # print(f"DEBUG API CALL [{endpoint}]: {params_peticion}")
-        # st.info(f"Enviando a API: {params_peticion}")
-
-        # Hacemos el fetch individual
-        # Tabla CARGA
-        df_parcial = fetch_dataframe(
-            Endpoints.ICARO_CARGA.value, params=params_peticion
-        )
-        df_carga = pd.concat([df_carga, df_parcial], ignore_index=True)
-
-        # Tabla Retenciones
-        df_parcial = fetch_dataframe(
-            Endpoints.ICARO_RETENCIONES.value, params=params_peticion
-        )
-        df_ret = pd.concat([df_ret, df_parcial], ignore_index=True)
+    # Tabla Retenciones
+    df_ret = fetch_dataframe(Endpoints.ICARO_RETENCIONES.value, params=params_peticion)
 
     return df_carga, df_ret
 
@@ -110,29 +92,18 @@ def icaro_carga_template(
                 if f"temp_file_{key}" in st.session_state:
                     del st.session_state[f"temp_file_{key}"]
                 with st.spinner("Preparando archivos Excel..."):
-                    # REPETIMOS LÓGICA DE FILTROS:
-                    listas_valores = [s[1] for s in selections]
-                    nombres_params = [s[0] for s in selections]
+                    # Llamada a la API que devuelve StreamingResponse
+                    excel_binario = fetch_excel_stream(
+                        f"{Endpoints.ICARO_CARGA.value}/export",
+                        params_preparation(selections, filtro_avanzado),
+                    )
 
-                    # Para simplificar, si el usuario exporta, quizás quieras
-                    # mandarle un solo Excel con la combinación actual o iterar.
-                    # Aquí asumo que mandas el primer set de filtros o el consolidado:
-                    for combinacion in itertools.product(*listas_valores):
-                        params_peticion = dict(zip(nombres_params, combinacion))
-                        params_peticion["queryFilter"] = filtro_avanzado
-
-                        # Llamada a la API que devuelve StreamingResponse
-                        excel_binario = fetch_excel_stream(
-                            f"{Endpoints.ICARO_CARGA.value}/export", params_peticion
-                        )
-
-                        if excel_binario:
-                            # IMPORTANTE: Como st.download_button recarga la página,
-                            # a veces es mejor usar un link o guardarlo en session_state
-                            st.session_state[f"temp_file_{key}"] = excel_binario
-                            st.success("✅ Archivo generado con éxito.")
-                            st.rerun()
-                        break  # Si solo quieres el primer set, o ajusta según tu necesidad
+                    if excel_binario:
+                        # IMPORTANTE: Como st.download_button recarga la página,
+                        # a veces es mejor usar un link o guardarlo en session_state
+                        st.session_state[f"temp_file_{key}"] = excel_binario
+                        st.success("✅ Archivo generado con éxito.")
+                        st.rerun()
 
             except Exception as e:
                 st.error(f"Error al exportar: {e}")
@@ -226,36 +197,62 @@ def icaro_carga_template(
                     "nro_certificado": st.column_config.TextColumn("cert"),
                 },
             )
-            # 2. Lógica de filtrado dinámico
-            # Verificamos si hay alguna fila seleccionada
-            if len(event.selection.rows) > 0:
-                selected_row_index = event.selection.rows[0]
-                # Extraemos el id_carga de esa fila
-                selected_id = df_carga.iloc[selected_row_index]["id_carga"]
+            with st.container(horizontal=True, border=False, width="stretch"):
+                if st.button("Autocarga", key=f"btn_autocarga_df_carga_{key}"):
+                    pass
+                if st.button("Carga Manual", key=f"btn_carga_manual_df_carga_{key}"):
+                    pass
+                if st.button("Editar", key=f"btn_editar_carga_df_carga_{key}"):
+                    pass
+                if st.button("Borrar", key=f"btn_borrar_df_carga_{key}"):
+                    pass
 
-                st.info(f"Mostrando detalles para ID Carga: **{selected_id}**")
-                df_ret_filtrado = df_ret[df_ret["id_carga"] == selected_id]
-                df_carga_filtrado = df_carga[df_carga["id_carga"] == selected_id]
-                with st.container(horizontal=True, border=False, width="stretch"):
+        # 2. Lógica de filtrado dinámico
+        # Verificamos si hay alguna fila seleccionada
+        if len(event.selection.rows) > 0:
+            selected_row_index = event.selection.rows[0]
+            # Extraemos el id_carga de esa fila
+            selected_id = df_carga.iloc[selected_row_index]["id_carga"]
+
+            # st.info(f"Mostrando detalles para ID Carga: **{selected_id}**")
+            df_ret_filtrado = df_ret[df_ret["id_carga"] == selected_id]
+            df_carga_filtrado = df_carga[df_carga["id_carga"] == selected_id]
+            with st.container(horizontal=True, border=False, width="stretch"):
+                with st.container(horizontal=False, border=True, width="stretch"):
                     dataframe(
                         df_carga_filtrado,
                         key=f"df_imp_{key}",
-                        height=200,
+                        height=150,
                         column_order=[
                             "actividad",
                             "partida",
                             "importe",
                         ],
                     )
+                    with st.container(horizontal=True, border=False, width="stretch"):
+                        if st.button("Agregar", key=f"btn_agregar_df_imp_{key}"):
+                            pass
+                        if st.button("Editar", key=f"btn_editar_df_imp_{key}"):
+                            pass
+                        if st.button("Borrar", key=f"btn_borrar_df_imp_{key}"):
+                            pass
+                with st.container(horizontal=False, border=True, width="stretch"):
                     dataframe(
                         df_ret_filtrado,
                         key=f"df_ret_{key}",
-                        height=200,
+                        height=150,
                         column_order=[
                             "codigo",
                             "importe",
                         ],
                     )
+                    with st.container(horizontal=True, border=False, width="stretch"):
+                        if st.button("Agregar", key=f"btn_agregar_df_ret_{key}"):
+                            pass
+                        if st.button("Editar", key=f"btn_editar_df_ret_{key}"):
+                            pass
+                        if st.button("Borrar", key=f"btn_borrar_df_ret_{key}"):
+                            pass
 
 
 if __name__ == "__main__":
