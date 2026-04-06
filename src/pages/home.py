@@ -3,15 +3,20 @@ Author: Fernando Corrales <fscpython@gmail.com>
 Purpose: ICARO's Home Page
 """
 
-import itertools
-
 import pandas as pd
 import streamlit as st
 
-from src.components.buttons import button_export
-from src.components.dataframes import dataframe
-from src.components.multiselects import multiselect_filter
-from src.components.text_inputs import text_input_advance_filter
+from src.components import (
+    button_export,
+    dataframe,
+    multiselect_filter,
+    text_input_advance_filter,
+)
+
+# from src.components.buttons import button_export
+# from src.components.dataframes import dataframe
+# from src.components.multiselects import multiselect_filter
+# from src.components.text_inputs import text_input_advance_filter
 from src.constants.endpoints import Endpoints
 from src.constants.options import get_ejercicios_list
 from src.services.api_client import (

@@ -1,3 +1,5 @@
+__all__ = ["multiselect_filter"]
+
 from typing import Any
 
 import streamlit as st
