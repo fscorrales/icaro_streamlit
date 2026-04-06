@@ -91,16 +91,13 @@ def build_navigation() -> None:
             title="Proveedores",
             icon="👷‍♂️",
         ),
-        st.Page(
-            "src/pages/controles/control_haberes.py", title="Control Haberes", icon="👤"
-        ),
     ]
 
     # 2. Agregamos páginas extra según el rol (sin crear una sección nueva)
     if role == "admin":
         pages.append(
             st.Page(
-                "src/pages/admin/gestion_usuarios.py",
+                "src/pages/gestion_usuarios.py",
                 title="Gestión de Usuarios",
                 icon="👥",
             )
