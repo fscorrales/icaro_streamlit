@@ -19,9 +19,8 @@ from src.services.api_client import (
     fetch_excel_stream,
 )
 from src.views import (
-    home_carga,
-    home_imputaciones,
-    home_retenciones,
+    dataframe_home_carga,
+    dataframe_with_buttons,
     params_preparation,
 )
 
@@ -169,7 +168,7 @@ def icaro_carga_template(
 
     # 4. Mostrar resultados (usando session_state para que no desaparezcan)
     if not df_carga.empty:
-        event = home_carga(df_carga, key)
+        event = dataframe_home_carga(df_carga, key=f"{key}_df_carga")
 
         # 2. Lógica de filtrado dinámico
         # Verificamos si hay alguna fila seleccionada
@@ -182,8 +181,23 @@ def icaro_carga_template(
             with st.container(horizontal=True, border=False, width="stretch"):
                 df_ret_filtrado = df_ret[df_ret["id_carga"] == selected_id]
                 df_carga_filtrado = df_carga[df_carga["id_carga"] == selected_id]
-                home_imputaciones(df_carga_filtrado, key)
-                home_retenciones(df_ret_filtrado, key)
+                dataframe_with_buttons(
+                    df_carga_filtrado,
+                    key=f"{key}_df_imp",
+                    column_order=[
+                        "actividad",
+                        "partida",
+                        "importe",
+                    ],
+                )
+                dataframe_with_buttons(
+                    df_ret_filtrado,
+                    key=f"{key}_df_ret",
+                    column_order=[
+                        "codigo",
+                        "importe",
+                    ],
+                )
 
 
 if __name__ == "__main__":

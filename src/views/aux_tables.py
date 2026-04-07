@@ -1,4 +1,9 @@
-__all__ = ["report_template", "params_preparation"]
+__all__ = [
+    "report_template",
+    "params_preparation",
+    "dataframe_with_buttons",
+    "dataframe_home_carga",
+]
 
 from typing import Any, Optional
 
@@ -6,7 +11,11 @@ import pandas as pd
 import streamlit as st
 
 from src.components import (
+    button_add,
+    button_delete,
+    button_edit,
     button_export,
+    button_selfadd,
     button_update,
     dataframe,
     multiselect_filter,
@@ -155,3 +164,88 @@ def report_template(
     if data_key in st.session_state:
         dataframe(st.session_state[data_key], key=f"df_{key}")
         # st.dataframe(st.session_state[data_key], width="stretch")
+
+
+# --------------------------------------------------
+def dataframe_with_buttons(
+    df: pd.DataFrame,
+    key: str = "df_with_btns",
+    height: int = 150,
+    column_order: list = [],
+    **kwargs,
+):
+
+    with st.container(horizontal=False, border=True, width="stretch"):
+        dataframe(df, key=f"{key}", height=height, column_order=column_order, **kwargs)
+        with st.container(
+            horizontal=True,
+            border=False,
+            width="stretch",
+            horizontal_alignment="center",
+            gap="medium",
+        ):
+            if button_add("Agregar", key=f"btn_add_{key}"):
+                pass
+            if button_edit("Editar", key=f"btn_edit_{key}"):
+                pass
+            if button_delete("Borrar", key=f"btn_delete_{key}"):
+                pass
+
+
+# --------------------------------------------------
+def dataframe_home_carga(
+    df_carga: pd.DataFrame, key: str = "df_home_carga", height: int = 200, **kwargs
+):
+    with st.container(
+        horizontal=False,
+        border=True,
+        width="stretch",
+    ):
+        event = dataframe(
+            df_carga,
+            key=f"df_carga_{key}",
+            height=height,
+            on_select="rerun",
+            selection_mode="single-row",
+            column_order=[
+                "mes",
+                "fecha",
+                "id_carga",
+                # "nro_comprobante",
+                "tipo",
+                "fuente",
+                "cta_cte",
+                "importe",
+                "desc_obra",
+                # "fondo_reparo",
+                "avance",
+                "nro_certificado",
+                "cuit",
+                "origen",
+            ],
+            column_config={
+                "fecha": st.column_config.DateColumn(
+                    "fecha",
+                    format="DD/MM/YYYY",  # O el formato que prefieras
+                ),
+                "nro_certificado": st.column_config.TextColumn("cert"),
+            },
+            **kwargs,
+        )
+        with st.container(
+            horizontal=True,
+            border=False,
+            width="stretch",
+            horizontal_alignment="center",
+            gap="medium",
+        ):
+            if button_selfadd("Autocarga", key=f"btn_selfadd_{key}"):
+                pass
+            if button_add("Agregar", key=f"btn_add_{key}"):
+                pass
+            if button_edit("Editar", key=f"btn_edit_{key}"):
+                pass
+            if button_delete("Borrar", key=f"btn_delete_{key}"):
+                pass
+
+    return event
