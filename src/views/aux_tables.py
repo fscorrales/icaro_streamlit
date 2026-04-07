@@ -1,5 +1,6 @@
 __all__ = [
     "report_template",
+    "report_template_without_filters",
     "params_preparation",
     "dataframe_with_buttons",
     "dataframe_home_carga",
@@ -39,7 +40,7 @@ def params_preparation(
     """
     params_peticion = {"limit": 0, "queryFilter": filtro_avanzado}
 
-    if selections:
+    if len(selections) > 0:
         for nombre_param, valores in selections:
             if valores:
                 params_peticion[nombre_param] = ",".join(map(str, valores))
@@ -167,6 +168,76 @@ def report_template(
     if data_key in st.session_state:
         dataframe(st.session_state[data_key], key=f"df_{key}")
         # st.dataframe(st.session_state[data_key], width="stretch")
+
+
+@st.fragment  # Permite que los filtros internos no recarguen TODA la página
+# --------------------------------------------------
+def report_template_without_filters(
+    key: str,
+    title: str,
+    endpoint: str,
+    description: str,
+    has_export: bool = True,
+):
+    """
+    Vista reutilizable.
+    filters_config: Lista de dicts con ['label', 'options', 'key', 'default']
+    """
+    st.markdown(f"# {title}")
+    st.write(description)
+
+    # 0. Lógica de Exportación
+    def download_file():
+        # Validamos filtros antes de proceder
+        try:
+            # Limpiamos basura anterior antes de empezar el proceso pesado
+            if f"temp_file_{key}" in st.session_state:
+                del st.session_state[f"temp_file_{key}"]
+            with st.spinner("Preparando archivos Excel..."):
+                # Llamada a la API que devuelve StreamingResponse
+                excel_binario = fetch_excel_stream(
+                    f"{endpoint}/export",
+                    params_preparation(filtro_avanzado=filtro_avanzado),
+                )
+
+                if excel_binario:
+                    # IMPORTANTE: Como st.download_button recarga la página,
+                    # a veces es mejor usar un link o guardarlo en session_state
+                    st.session_state[f"temp_file_{key}"] = excel_binario
+                    st.success("✅ Archivo generado con éxito.")
+                    st.rerun()
+
+        except Exception as e:
+            st.error(f"Error al exportar: {e}")
+
+    # 1. Renderizar Filtros
+    # --- Filtros (Estado local del componente) ---
+    with st.container(horizontal=True, vertical_alignment="bottom"):
+        filtro_avanzado = text_input_advance_filter(
+            key="text_input_advance_filter-" + key
+        )
+
+        if has_export:
+            # Aquí podrías integrar tu logic de exportación
+            if f"temp_file_{key}" not in st.session_state:
+                if button_export("Exportar a Excel y GS", key=f"button_export_{key}"):
+                    download_file()
+            else:
+                # Si hay archivo, el botón "Exportar" desaparece y aparece el de "Descargar"
+                st.download_button(
+                    label="📥 GUARDAR EXCEL",
+                    data=st.session_state[f"temp_file_{key}"],
+                    file_name=f"reporte_{key}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"btn_dl_{key}",
+                    type="primary",  # Lo ponemos en color para que resalte
+                    on_click=lambda: st.session_state.pop(f"temp_file_{key}"),
+                )
+
+    # Sincronizamos con el session_state para que 'render' lo vea
+    if st.session_state.get(f"{key}_advanced_filter") != filtro_avanzado:
+        st.session_state[f"{key}_advanced_filter"] = filtro_avanzado
+        st.rerun()  # Forzamos que toda la página (fuera del fragmento) reaccione
 
 
 # --------------------------------------------------
