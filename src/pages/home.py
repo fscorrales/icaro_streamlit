@@ -33,16 +33,20 @@ def get_data_carga(selections: list, filtro_avanzado: str = ""):
     df_carga = pd.DataFrame()
     df_ret = pd.DataFrame()
 
-    params_peticion = params_preparation(
-        selections, filtro_avanzado
-    )  # Preparamos los parámetros para la API
+    params_peticion = {
+        "limit": 0,
+    }
+    for nombre_param, valores in selections:
+        if valores:
+            params_peticion[nombre_param] = ",".join(map(str, valores))
 
     # Hacemos el fetch individual
-    # Tabla CARGA
-    df_carga = fetch_dataframe(Endpoints.ICARO_CARGA.value, params=params_peticion)
-
     # Tabla Retenciones
     df_ret = fetch_dataframe(Endpoints.ICARO_RETENCIONES.value, params=params_peticion)
+
+    # Tabla CARGA
+    params_peticion["queryFilter"] = filtro_avanzado
+    df_carga = fetch_dataframe(Endpoints.ICARO_CARGA.value, params=params_peticion)
 
     return df_carga, df_ret
 
