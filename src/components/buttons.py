@@ -39,27 +39,21 @@ def button_export(label: str, key: str = "button_export", **kwargs):
 def button_add(label: str, key: str = "button_add", **kwargs):
     """Un componente reutilizable"""
     with st.container(border=False, width="content"):
-        return st.button(
-            "💾 " + label, key=key, width=DEFAULT_WIDTH, type="primary", **kwargs
-        )
+        return st.button("💾 " + label, key=key, width=DEFAULT_WIDTH, **kwargs)
 
 
 # --------------------------------------------------
 def button_edit(label: str, key: str = "button_edit", **kwargs):
     """Un componente reutilizable"""
     with st.container(border=False, width="content"):
-        return st.button(
-            "✏️ " + label, key=key, width=DEFAULT_WIDTH, type="secondary", **kwargs
-        )
+        return st.button("✏️ " + label, key=key, width=DEFAULT_WIDTH, **kwargs)
 
 
 # --------------------------------------------------
 def button_delete(label: str, key: str = "button_delete", **kwargs):
     """Un componente reutilizable"""
     with st.container(border=False, width="content"):
-        return st.button(
-            "🗑️ " + label, key=key, width=DEFAULT_WIDTH, type="tertiary", **kwargs
-        )
+        return st.button("🗑️ " + label, key=key, width=DEFAULT_WIDTH, **kwargs)
 
 
 # --------------------------------------------------

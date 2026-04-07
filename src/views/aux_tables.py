@@ -184,7 +184,7 @@ def dataframe_with_buttons(
             horizontal_alignment="center",
             gap="medium",
         ):
-            if button_add("Agregar", key=f"btn_add_{key}"):
+            if button_add("Agregar", key=f"btn_add_{key}", type="primary"):
                 pass
             if button_edit("Editar", key=f"btn_edit_{key}"):
                 pass
@@ -239,7 +239,7 @@ def dataframe_home_carga(
             horizontal_alignment="center",
             gap="medium",
         ):
-            if button_selfadd("Autocarga", key=f"btn_selfadd_{key}"):
+            if button_selfadd("Autocarga", key=f"btn_selfadd_{key}", type="primary"):
                 pass
             if button_add("Agregar", key=f"btn_add_{key}"):
                 pass
