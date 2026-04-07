@@ -30,16 +30,19 @@ from src.services.api_client import (
 
 
 # --------------------------------------------------
-def params_preparation(selections: list, filtro_avanzado: str):
+def params_preparation(
+    selections: list = [], filtro_avanzado: str = ""
+) -> dict[str, Any]:
     """
     Función auxiliar para preparar los parámetros de la API a partir de las selecciones y el filtro avanzado.
     Devuelve un diccionario listo para ser usado en la petición.
     """
     params_peticion = {"limit": 0, "queryFilter": filtro_avanzado}
 
-    for nombre_param, valores in selections:
-        if valores:
-            params_peticion[nombre_param] = ",".join(map(str, valores))
+    if selections:
+        for nombre_param, valores in selections:
+            if valores:
+                params_peticion[nombre_param] = ",".join(map(str, valores))
 
     return params_peticion
 
