@@ -6,20 +6,14 @@ Purpose: ICARO's Obras Page
 import pandas as pd
 import streamlit as st
 
-from src.components import (
-    button_export,
-    text_input_advance_filter,
-)
 from src.constants import Endpoints
 from src.services.api_client import (
     APIConnectionError,
     APIResponseError,
     fetch_dataframe,
-    fetch_excel_stream,
 )
 from src.views import (
     dataframe_with_buttons,
-    params_preparation,
     report_template_without_filters,
 )
 
@@ -76,7 +70,22 @@ def render() -> None:
 
     # 4. Mostrar resultados (usando session_state para que no desaparezcan)
     if not df_obras.empty:
-        dataframe_with_buttons(df_obras, key=f"{REPORTE}_df_obras", height=300)
+        dataframe_with_buttons(
+            df_obras,
+            key=f"{REPORTE}_df_obras",
+            height=300,
+            column_order=[
+                "actividad",
+                "partida",
+                "fuente",
+                "desc_obra",
+                "cuit",
+                "cta_cte",
+                "norma_legal",
+                "localidad",
+                "info_adicional",
+            ],
+        )
 
 
 if __name__ == "__main__":
