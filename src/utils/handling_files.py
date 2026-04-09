@@ -13,7 +13,9 @@ __all__ = [
 
 
 import sqlite3
+from io import BytesIO
 from pathlib import Path
+from typing import Union
 
 import pandas as pd
 
@@ -34,7 +36,7 @@ def read_xls(PATH: str, header: int = 0) -> pd.DataFrame:
 
 
 # --------------------------------------------------
-def read_csv_file(file_path: Path) -> pd.DataFrame:
+def read_csv_file(file_path: Union[Path, str, BytesIO]) -> pd.DataFrame:
     """Read csv file"""
     try:
         df = pd.read_csv(
@@ -49,4 +51,4 @@ def read_csv_file(file_path: Path) -> pd.DataFrame:
         return df
     except Exception as e:
         print(f"Error al leer el archivo: {e}")
-        return None
+        return pd.DataFrame()

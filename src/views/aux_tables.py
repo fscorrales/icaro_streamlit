@@ -6,6 +6,7 @@ __all__ = [
     "dataframe_home_carga",
 ]
 
+import time
 from typing import Any, Optional
 
 import pandas as pd
@@ -22,12 +23,12 @@ from src.components import (
     multiselect_filter,
     text_input_advance_filter,
 )
-from src.services.api_client import (
-    APIConnectionError,
-    APIResponseError,
+from src.services import (
     fetch_dataframe,
     fetch_excel_stream,
+    post_request,
 )
+from src.utils import APIConnectionError, APIResponseError, read_csv_file
 
 
 # --------------------------------------------------
@@ -178,6 +179,8 @@ def report_template_without_filters(
     endpoint: str,
     description: str,
     has_export: bool = True,
+    has_upload: bool = False,
+    process_func=None,
 ):
     """
     Vista reutilizable.
@@ -216,6 +219,20 @@ def report_template_without_filters(
         filtro_avanzado = text_input_advance_filter(
             key="text_input_advance_filter-" + key
         )
+        if f"{key}_uploader_iteration" not in st.session_state:
+            st.session_state[f"{key}_uploader_iteration"] = 0
+
+        uploaded_file = (
+            st.file_uploader(
+                f"Cargar CSV de {title}",
+                type=["csv"],
+                key=f"{key}_upload_file_{st.session_state[f'{key}_uploader_iteration']}",
+                label_visibility="collapsed",
+                disabled=not has_upload,  # Add this line to disable the uploader if has_upload is False
+            )
+            if has_upload
+            else None
+        )
 
         if has_export:
             # Aquí podrías integrar tu logic de exportación
@@ -233,6 +250,35 @@ def report_template_without_filters(
                     type="primary",  # Lo ponemos en color para que resalte
                     on_click=lambda: st.session_state.pop(f"temp_file_{key}"),
                 )
+
+    if uploaded_file:
+        df = read_csv_file(uploaded_file)
+        if process_func:
+            df = process_func(df)
+        # Validación Visual (El "seguro" del usuario)
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Filas a procesar", len(df))
+        col2.metric("Columnas", len(df.columns))
+        col3.info("Validación: OK" if not df.empty else "Error: CSV Vacío")
+
+        with st.expander("Ver vista previa de datos limpios"):
+            st.dataframe(df.head(10), width="stretch")
+
+        if st.button("🚀 Confirmar y Sincronizar con Base de Datos", type="primary"):
+            with st.spinner("Ejecutando script de carga..."):
+                # Transformación final para Mongo
+                registros = df.to_dict(orient="records")
+
+                res = post_request(endpoint, registros)
+
+                st.success(
+                    f"✅ Sincronización exitosa: {len(registros)} documentos insertados."
+                )
+                st.balloons()  # Un poco de feedback visual nunca viene mal
+                st.session_state[f"{key}_uploader_iteration"] += 1
+                time.sleep(2)
+
+                st.rerun()
 
     # Sincronizamos con el session_state para que 'render' lo vea
     if st.session_state.get(f"{key}_advanced_filter") != filtro_avanzado:

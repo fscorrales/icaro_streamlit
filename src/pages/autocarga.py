@@ -9,10 +9,9 @@ import streamlit as st
 from src.constants import Endpoints
 from src.services import (
     fetch_dataframe,
-    post_request,
     process_resumen_rend_obras,
 )
-from src.utils import APIConnectionError, APIResponseError, read_csv_file
+from src.utils import APIConnectionError, APIResponseError
 from src.views import (
     dataframe_with_buttons,
     report_template_without_filters,
@@ -46,7 +45,7 @@ def get_data_certificados(filtro_avanzado: str = ""):
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_data_epam(filtro_avanzado: str = ""):
+def get_data_epam(filtro_avanzado: str = "") -> pd.DataFrame:
     df = pd.DataFrame()
 
     params_peticion = {
@@ -99,6 +98,7 @@ def render() -> None:
             st.error(f"⚠️ Error de API: {e}")
 
         # 4. Mostrar resultados (usando session_state para que no desaparezcan)
+        df_certificados = pd.DataFrame()
         if not df_certificados.empty:
             # Definimos las columnas que NO queremos mostrar
             columnas_a_excluir = ["id_carga", "updated_at", "id"]
@@ -130,14 +130,17 @@ def render() -> None:
             key=REPORTE_EPAM,
             title=REPORTE_EPAM.capitalize(),
             description="Resumen de Rendiciones de Obras EPAM. Utiliza el filtro avanzado para realizar consultas específicas.",
-            endpoint=Endpoints.ICARO_CERTIFICADOS.value,
+            endpoint=Endpoints.ICARO_RESUMEN_REND_OBRAS.value,
             has_export=True,
+            has_upload=True,
+            process_func=process_resumen_rend_obras,
         )
 
         # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
         filtro_actual = st.session_state.get(f"{REPORTE_EPAM}_advanced_filter", "")
 
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
+        df_epam = pd.DataFrame()
         try:
             df_epam = get_data_epam(filtro_actual)
 
@@ -165,41 +168,6 @@ def render() -> None:
                 height=250,
                 column_order=orden_dinamico,
             )
-
-        uploaded_file = st.file_uploader(
-            f"Cargar CSV de {REPORTE_EPAM.capitalize()}",
-            type=["csv"],
-            key=f"{REPORTE_EPAM}_upload_file",
-        )
-        if uploaded_file:
-            df = read_csv_file(uploaded_file)
-            df = process_resumen_rend_obras(df)
-            # Validación Visual (El "seguro" del usuario)
-            col1, col2, col3 = st.columns(3)
-            col1.metric("Filas a procesar", len(df))
-            col2.metric("Columnas", len(df.columns))
-            col3.info("Validación: OK" if not df.empty else "Error: CSV Vacío")
-
-            with st.expander("Ver vista previa de datos limpios"):
-                st.dataframe(df.head(10), width="stretch")
-
-            # Botón de Acción Definitiva
-            # Usamos un botón con color 'primary' (rojo/naranja) para indicar acción
-            if st.button(
-                "🚀 Confirmar y Sincronizar con Base de Datos", type="primary"
-            ):
-                with st.spinner("Ejecutando script de carga..."):
-                    # Transformación final para Mongo
-                    registros = df.to_dict(orient="records")
-
-                    res = post_request(
-                        Endpoints.ICARO_RESUMEN_REND_OBRAS.value, registros
-                    )
-
-                    st.success(
-                        f"✅ Sincronización exitosa: {len(registros)} documentos insertados."
-                    )
-                    st.balloons()  # Un poco de feedback visual nunca viene mal
 
 
 if __name__ == "__main__":
