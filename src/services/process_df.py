@@ -194,3 +194,150 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     ]
 
     return df
+
+
+def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
+    df = dataframe.copy()
+    # 1. Lógica previa para 'obra' (ffill es clave para reportes con celdas combinadas)
+    titulo_reporte = df.iloc[0, 1]
+
+    if titulo_reporte != "Resumen de Certificaciones:":
+        return pd.DataFrame()  # O manejar el error según tu flujo
+    # 2. Uso de assign (Equivalente a mutate de R)
+    # Nota: Usamos np.where porque es más directo: np.where(condicion, valor_si_true, valor_si_false)
+
+    #   BD <- BD %>%
+    #     transmute(NroComprobanteSIIF = "",
+    #               TipoComprobanteSIIF = "",
+    #               Origen = "Obras",
+    #               Periodo = str_sub(X3[1], -4),
+    #               Beneficiario = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X22, NA),
+    #               Obra = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X23, X22),
+    #               CodigoObra = str_sub(Obra, 0, 9),
+    #               NroCertificado = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X24, X23),
+    #               NoSe = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X25, X24),
+    #               NoSe2 = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X26, X25),
+    #               MontoCertificado = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X27, X26),
+    #               FondoDeReparo = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X28, X27),
+    #               Otros = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X29, X28),
+    #               ImporteBruto = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X30, X29),
+    #               IIBB = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X31, X30),
+    #               LP = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X32, X31),
+    #               SUSS = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X33, X32),
+    #               Gcias = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X34, X33),
+    #               INVICO = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X35, X34),
+    #               Retenciones = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X36, X35),
+    #               ImporteNeto = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X37, X36)) %>%
+    #     select(-NoSe, -NoSe2) %>%
+    #     zoo::na.locf()
+
+    #   BD <- BD %>%
+    #     mutate(MontoCertificado = parse_number(MontoCertificado),
+    #            FondoDeReparo = parse_number(FondoDeReparo),
+    #            Otros = parse_number(Otros),
+    #            ImporteBruto = parse_number(ImporteBruto),
+    #            IIBB = parse_number(IIBB),
+    #            LP = parse_number(LP),
+    #            SUSS = parse_number(SUSS),
+    #            Gcias = parse_number(Gcias),
+    #            INVICO = parse_number(INVICO),
+    #            Retenciones = parse_number(Retenciones),
+    #            ImporteNeto = parse_number(ImporteNeto)) %>%
+    #     select(-Retenciones, -CodigoObra, -Otros)
+
+    #   if (ExisteTablaBD("CERTIFICADOS")) {
+    #     DatosDepurados <- FiltrarBD(
+    #       paste0("SELECT * FROM CERTIFICADOS WHERE NroComprobanteSIIF <> ''")
+    #     )
+    #     DatosDepurados <- DatosDepurados %>%
+    #       bind_rows(BD)
+    #   } else {
+    #     DatosDepurados <- BD
+    #   }
+
+    #   DatosDepurados <- DatosDepurados %>%
+    #     arrange(desc(TipoComprobanteSIIF), desc(NroComprobanteSIIF),
+    #             Beneficiario, Obra, NroCertificado)
+
+    cond = df["37"] == "TOTALES"
+
+    df = df.assign(
+        beneficiario=np.where(cond, df["25"], df["36"]),
+        libramiento_sgf=np.where(cond, df["26"], df["37"]),
+        destino=np.where(cond, df["27"], df["38"]),
+        fecha=np.where(cond, df["28"], df["39"]),
+        movimiento=np.where(cond, df["29"], df["40"]),
+        importe_bruto=np.where(cond, df["39"], df["50"]),
+        gcias=np.where(cond, df["31"], df["42"]),
+        sellos=np.where(cond, df["32"], df["43"]),
+        lp=np.where(cond, df["33"], df["44"]),
+        iibb=np.where(cond, df["34"], df["45"]),
+        suss=np.where(cond, df["35"], df["46"]),
+        seguro=np.where(cond, df["36"], df["47"]),
+        salud=np.where(cond, df["37"], df["48"]),
+        mutual=np.where(cond, df["38"], df["49"]),
+        importe_neto=np.where(cond, df["30"], df["41"]),
+    )
+
+    # 3. Derivados de fecha y obra
+    df["ejercicio"] = df["fecha"].str[-4:]
+    df["mes"] = df["fecha"].str[3:5] + "/" + df["ejercicio"]
+
+    # Split seguro (si no hay "-" no rompe)
+    df[["cod_obra", "desc_obra"]] = df["obra"].str.split("-", n=1, expand=True)
+    df["cod_obra"] = df["cod_obra"].str.strip()
+
+    # 4. Conversión Numérica Robusta
+    to_numeric_cols = [
+        "importe_bruto",
+        "gcias",
+        "sellos",
+        "lp",
+        "iibb",
+        "suss",
+        "seguro",
+        "salud",
+        "mutual",
+        "importe_neto",
+    ]
+
+    for col in to_numeric_cols:
+        # Reemplazamos vacíos por "0", quitamos comas y convertimos
+        df[col] = pd.to_numeric(
+            df[col].astype(str).str.replace(",", ""), errors="coerce"
+        ).fillna(0.0)
+
+    # 5. Cálculo de Retenciones (Suma horizontal)
+    cols_to_sum = [
+        c for c in to_numeric_cols if c not in ["importe_neto", "importe_bruto"]
+    ]
+    df["retenciones"] = df[cols_to_sum].sum(axis=1)
+
+    # 6. Formateo de fecha para MongoDB (evita errores de string)
+    df["fecha"] = pd.to_datetime(df["fecha"], format="%d/%m/%Y", errors="coerce")
+
+    # 7. Selección final (transmute style)
+    cols_finales = [
+        "ejercicio",
+        "mes",
+        "fecha",
+        "beneficiario",
+        "cod_obra",
+        "obra",
+        "destino",
+        "libramiento_sgf",
+        "movimiento",
+        "importe_bruto",
+        "gcias",
+        "sellos",
+        "lp",
+        "iibb",
+        "suss",
+        "seguro",
+        "salud",
+        "mutual",
+        "retenciones",
+        "importe_neto",
+    ]
+
+    return df[cols_finales]

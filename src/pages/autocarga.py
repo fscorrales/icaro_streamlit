@@ -78,6 +78,7 @@ def render() -> None:
             description="Certificados del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
             endpoint=Endpoints.ICARO_CERTIFICADOS.value,
             has_export=True,
+            has_upload=True,
         )
 
         # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
