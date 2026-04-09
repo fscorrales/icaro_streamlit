@@ -6,18 +6,18 @@ import streamlit as st
 # --------------------------------------------------
 def text_input_advance_filter(key: str = "text_input_advance_filter", **kwargs):
     """Un componente reutilizable"""
-    helper_text = """
+    helper_text = """ 
         ### 🔍 Guía de Filtros Dinámicos
         Podés combinar múltiples filtros usando comas (`,`).
 
         | Operador | Significado | Ejemplo |
         | :--- | :--- | :--- |
         | `=` | Igual a | `ejercicio=2024` |
-        | ` ! ` ` = ` | Desigual | `fuente!` `=str:11` |
+        | ` ! ` ` = ` | Desigual | `fuente!=str:11` |
         | `>` | Mayor que | `importe>50000` |
-        | `>` `=` | Mayor o igual | `fecha>` `=2024-01-01` |
+        | `>` `=` | Mayor o igual | `fecha>=2024-01-01` |
         | `<` | Menor que | `limite<100` |
-        | `<` `=` | Menor o igual | `offset<` `=10` |
+        | `<` `=` | Menor o igual | `offset<=10` |
         | `~` | Contiene (Regex) | `desc_obra~54 viv` |
 
         ---
@@ -41,14 +41,13 @@ def text_input_advance_filter(key: str = "text_input_advance_filter", **kwargs):
             * ` | ` O (OR): `fuente~10|11` (Que sea fuente 10 o fuente 11).
             * ` [ ] ` Rango: `ejercicio~202[4-6]` (Busca 2024, 2025 o 2026).
         * **Especiales:**
-            * ` \ ` Escapar: `monto~10\.50` (Para buscar el punto literal).
             * ` ^(?!.*texto) ` No contiene: `obra~^(?!.*cancelada)` (Obras que NO digan cancelada).
         """
     with st.container(border=False, width="stretch"):
         text = st.text_input(
             "Filtro avanzado",
             value="",
-            placeholder="ej: ejercicio=2024, fuente=str:10",
+            placeholder="ej: ejercicio=2024, fuente!=str:11",
             help=helper_text,
             key=key,
             **kwargs,

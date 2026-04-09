@@ -6,6 +6,14 @@ Todas las páginas deben usar este módulo en lugar de llamar a httpx
 directamente.
 """
 
+__all__ = [
+    "fetch_data",
+    "fetch_excel_stream",
+    "post_request",
+    "patch_request",
+    "fetch_dataframe",
+]
+
 import json
 from io import BytesIO
 from typing import Any, Optional

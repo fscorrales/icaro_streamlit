@@ -1,3 +1,5 @@
+__all__ = ["get_current_user", "login", "register"]
+
 import httpx
 
 import src.utils.exceptions as ex

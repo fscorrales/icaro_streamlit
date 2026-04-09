@@ -22,7 +22,7 @@ def render_login() -> None:
                 password = st.text_input(
                     "Contraseña", type="password", key="login_password"
                 )
-                submitted = st.form_submit_button("Ingresar", use_container_width=True)
+                submitted = st.form_submit_button("Ingresar", width="stretch")
 
                 if submitted:
                     with st.spinner("Autenticando en el Sistema..."):
@@ -71,9 +71,7 @@ def render_login() -> None:
                 conf_pass = st.text_input(
                     "Confirmar Contraseña", type="password", key="reg_confirm"
                 )
-                submitted_reg = st.form_submit_button(
-                    "Crear Cuenta", use_container_width=True
-                )
+                submitted_reg = st.form_submit_button("Crear Cuenta", width="stretch")
 
                 if submitted_reg:
                     # 1. Validación de campos vacíos

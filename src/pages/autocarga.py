@@ -7,11 +7,12 @@ import pandas as pd
 import streamlit as st
 
 from src.constants import Endpoints
-from src.services.api_client import (
-    APIConnectionError,
-    APIResponseError,
+from src.services import (
     fetch_dataframe,
+    post_request,
+    process_resumen_rend_obras,
 )
+from src.utils import APIConnectionError, APIResponseError, read_csv_file
 from src.views import (
     dataframe_with_buttons,
     report_template_without_filters,
@@ -114,6 +115,16 @@ def render() -> None:
                 column_order=orden_dinamico,
             )
 
+        uploaded_file = st.file_uploader(
+            f"Cargar CSV de {REPORTE_CERTIFICADOS.capitalize()}",
+            type=["csv"],
+            key=f"{REPORTE_CERTIFICADOS}_upload_file",
+        )
+        if uploaded_file:
+            pass
+            # df = pd.read_csv(uploaded_file)
+            # st.session_state[f"data_{key}"] = df
+
     with tab_epam:
         report_template_without_filters(
             key=REPORTE_EPAM,
@@ -151,9 +162,44 @@ def render() -> None:
             dataframe_with_buttons(
                 df_epam,
                 key=f"{REPORTE_EPAM}_df_epam",
-                height=300,
+                height=250,
                 column_order=orden_dinamico,
             )
+
+        uploaded_file = st.file_uploader(
+            f"Cargar CSV de {REPORTE_EPAM.capitalize()}",
+            type=["csv"],
+            key=f"{REPORTE_EPAM}_upload_file",
+        )
+        if uploaded_file:
+            df = read_csv_file(uploaded_file)
+            df = process_resumen_rend_obras(df)
+            # Validación Visual (El "seguro" del usuario)
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Filas a procesar", len(df))
+            col2.metric("Columnas", len(df.columns))
+            col3.info("Validación: OK" if not df.empty else "Error: CSV Vacío")
+
+            with st.expander("Ver vista previa de datos limpios"):
+                st.dataframe(df.head(10), width="stretch")
+
+            # Botón de Acción Definitiva
+            # Usamos un botón con color 'primary' (rojo/naranja) para indicar acción
+            if st.button(
+                "🚀 Confirmar y Sincronizar con Base de Datos", type="primary"
+            ):
+                with st.spinner("Ejecutando script de carga..."):
+                    # Transformación final para Mongo
+                    registros = df.to_dict(orient="records")
+
+                    res = post_request(
+                        Endpoints.ICARO_RESUMEN_REND_OBRAS.value, registros
+                    )
+
+                    st.success(
+                        f"✅ Sincronización exitosa: {len(registros)} documentos insertados."
+                    )
+                    st.balloons()  # Un poco de feedback visual nunca viene mal
 
 
 if __name__ == "__main__":
