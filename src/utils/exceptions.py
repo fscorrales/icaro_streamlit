@@ -5,6 +5,8 @@ Este módulo define la jerarquía de errores personalizados para asegurar un
 manejo de errores coherente en toda la aplicación (servicios, views y pages).
 """
 
+__all__ = ["AppBaseException", "APIConnectionError", "APIResponseError"]
+
 
 # --------------------------------------------------
 class AppBaseException(Exception):

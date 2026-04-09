@@ -8,10 +8,12 @@ Source: https://realpython.com/working-with-files-in-python/#:~:text=To%20get%20
 __all__ = [
     "get_df_from_sql_table",
     "read_xls",
+    "read_csv_file",
 ]
 
 
 import sqlite3
+from pathlib import Path
 
 import pandas as pd
 
@@ -29,3 +31,22 @@ def read_xls(PATH: str, header: int = 0) -> pd.DataFrame:
     if header == 0:
         df.columns = [str(x) for x in range(df.shape[1])]
     return df
+
+
+# --------------------------------------------------
+def read_csv_file(file_path: Path) -> pd.DataFrame:
+    """Read csv file"""
+    try:
+        df = pd.read_csv(
+            file_path,
+            index_col=None,
+            header=None,
+            na_filter=False,
+            dtype=str,
+            encoding="ISO-8859-1",
+        )
+        df.columns = [str(x) for x in range(df.shape[1])]
+        return df
+    except Exception as e:
+        print(f"Error al leer el archivo: {e}")
+        return None
