@@ -9,6 +9,7 @@ import streamlit as st
 from src.constants import Endpoints
 from src.services import (
     fetch_dataframe,
+    process_certificados_obras,
     process_resumen_rend_obras,
 )
 from src.utils import APIConnectionError, APIResponseError
@@ -73,17 +74,18 @@ def render() -> None:
 
     with tab_certificados:
         report_template_without_filters(
-            key=REPORTE_CERTIFICADOS,
+            key=f"autocarga_{REPORTE_CERTIFICADOS}",
             title=REPORTE_CERTIFICADOS.capitalize(),
             description="Certificados del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
             endpoint=Endpoints.ICARO_CERTIFICADOS.value,
             has_export=True,
             has_upload=True,
+            process_func=process_certificados_obras,
         )
 
         # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
         filtro_actual = st.session_state.get(
-            f"{REPORTE_CERTIFICADOS}_advanced_filter", ""
+            f"autocarga_{REPORTE_CERTIFICADOS}_advanced_filter", ""
         )
 
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
@@ -116,19 +118,9 @@ def render() -> None:
                 column_order=orden_dinamico,
             )
 
-        uploaded_file = st.file_uploader(
-            f"Cargar CSV de {REPORTE_CERTIFICADOS.capitalize()}",
-            type=["csv"],
-            key=f"{REPORTE_CERTIFICADOS}_upload_file",
-        )
-        if uploaded_file:
-            pass
-            # df = pd.read_csv(uploaded_file)
-            # st.session_state[f"data_{key}"] = df
-
     with tab_epam:
         report_template_without_filters(
-            key=REPORTE_EPAM,
+            key=f"autocarga_{REPORTE_EPAM}",
             title=REPORTE_EPAM.capitalize(),
             description="Resumen de Rendiciones de Obras EPAM. Utiliza el filtro avanzado para realizar consultas específicas.",
             endpoint=Endpoints.ICARO_RESUMEN_REND_OBRAS.value,
@@ -138,7 +130,9 @@ def render() -> None:
         )
 
         # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
-        filtro_actual = st.session_state.get(f"{REPORTE_EPAM}_advanced_filter", "")
+        filtro_actual = st.session_state.get(
+            f"autocarga_{REPORTE_EPAM}_advanced_filter", ""
+        )
 
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
         df_epam = pd.DataFrame()

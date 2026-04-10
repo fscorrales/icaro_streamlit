@@ -18,6 +18,7 @@ from src.components import (
     button_edit,
     button_export,
     button_selfadd,
+    button_submit,
     button_update,
     dataframe,
     multiselect_filter,
@@ -259,26 +260,63 @@ def report_template_without_filters(
         col1, col2, col3 = st.columns(3)
         col1.metric("Filas a procesar", len(df))
         col2.metric("Columnas", len(df.columns))
-        col3.info("Validación: OK" if not df.empty else "Error: CSV Vacío")
+        col3.info("Validación: OK" if not df.empty else "Error: CSV Vacío o Incorrecto")
 
         with st.expander("Ver vista previa de datos limpios"):
             st.dataframe(df.head(10), width="stretch")
 
-        if st.button("🚀 Confirmar y Sincronizar con Base de Datos", type="primary"):
-            with st.spinner("Ejecutando script de carga..."):
-                # Transformación final para Mongo
-                registros = df.to_dict(orient="records")
+        if not df.empty:
+            with st.container(horizontal=True, horizontal_alignment="center"):
+                if button_submit("Confirmar CARGA BD", key=f"btn_add_{key}"):
+                    with st.spinner("Ejecutando script de carga..."):
+                        # Transformación final para Mongo
+                        registros = df.to_dict(orient="records")
 
-                res = post_request(endpoint, registros)
+                        res = post_request(endpoint, registros)
 
-                st.success(
-                    f"✅ Sincronización exitosa: {len(registros)} documentos insertados."
-                )
-                st.balloons()  # Un poco de feedback visual nunca viene mal
-                st.session_state[f"{key}_uploader_iteration"] += 1
-                time.sleep(2)
+                        if res:
+                            # 1. Extraer datos principales
+                            titulo = res.get("title", "Sincronización")
+                            agregados = res.get("added", 0)
+                            eliminados = res.get("deleted", 0)
+                            lista_errores = res.get("errors", [])
+                            num_errores = len(lista_errores)
 
-                st.rerun()
+                            # 2. Toast Combinado (Resumen Ejecutivo)
+                            # Ejemplo: 📊 Epam: +160 agregados, -160 eliminados.
+                            mensaje_toast = f"📊 {titulo}: +{agregados} agregados, -{eliminados} eliminados."
+
+                            if num_errores > 0:
+                                mensaje_toast += f" ({num_errores} con errores)"
+                                st.toast(mensaje_toast, icon="⚠️")
+                            else:
+                                st.toast(mensaje_toast, icon="✅")
+
+                            # 3. Gestión de Errores Detallados (Si existen)
+                            if num_errores > 0:
+                                with st.expander(
+                                    "❌ Detalle de Inconsistencias por Documento",
+                                    expanded=True,
+                                ):
+                                    for error_doc in lista_errores:
+                                        doc_id = error_doc.get(
+                                            "doc_id", "ID Desconocido"
+                                        )
+                                        details = error_doc.get("details", [])
+
+                                        st.markdown(f"**Documento ID:** `{doc_id}`")
+                                        for det in details:
+                                            # Estructura: loc, msg, error_type
+                                            st.caption(
+                                                f"📍 {det['loc']} | 🏷️ {det['error_type']}"
+                                            )
+                                            st.write(f"💬 {det['msg']}")
+                                        st.divider()
+                            else:
+                                st.balloons()
+                                st.session_state[f"{key}_uploader_iteration"] += 1
+                                time.sleep(5)
+                                st.rerun()
 
     # Sincronizamos con el session_state para que 'render' lo vea
     if st.session_state.get(f"{key}_advanced_filter") != filtro_avanzado:

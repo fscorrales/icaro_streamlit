@@ -1,6 +1,7 @@
 __all__ = [
     "button_update",
     "button_export",
+    "button_submit",
     "button_add",
     "button_edit",
     "button_delete",
@@ -33,6 +34,15 @@ def button_export(label: str, key: str = "button_export", **kwargs):
     """Un componente reutilizable"""
     with st.container(border=False, width="content"):
         return st.button("📤 " + label, key=key, width=DEFAULT_WIDTH, **kwargs)
+
+
+# --------------------------------------------------
+def button_submit(label: str, key: str = "button_submit", **kwargs):
+    """Un componente reutilizable"""
+    with st.container(border=False, width="content"):
+        return st.button(
+            "🗳️ " + label, key=key, width=DEFAULT_WIDTH, **kwargs, type="primary"
+        )
 
 
 # --------------------------------------------------

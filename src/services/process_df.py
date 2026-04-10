@@ -1,4 +1,8 @@
-__all__ = ["process_resumen_rend_obras", "process_resumen_rend_prov"]
+__all__ = [
+    "process_resumen_rend_obras",
+    "process_resumen_rend_prov",
+    "process_certificados_obras",
+]
 
 import numpy as np
 import pandas as pd
@@ -120,13 +124,17 @@ def process_resumen_rend_prov(dataframe: pd.DataFrame) -> pd.DataFrame:
 # --------------------------------------------------
 def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
+
+    titulo_reporte = df.iloc[0, 1]
+    if not titulo_reporte.startswith("Resumen de Rendiciones"):
+        return pd.DataFrame()
     df.loc[df["55"] != "", "obra"] = df["25"]
     df.loc[df["obra"] == "", "obra"] = df["38"]
     df["obra"] = df["obra"].ffill()
     df = df.assign(
-        obra=df["obra"],
+        desc_obra=df["obra"],
         beneficiario=df["25"].where(df["55"] == "", df["36"]),
-        libramiento_sgf=df["26"].where(df["55"] == "", df["37"]),
+        nro_libramiento_sgf=df["26"].where(df["55"] == "", df["37"]),
         destino=df["27"].where(df["55"] == "", df["38"]),
         fecha=df["28"].where(df["55"] == "", df["39"]),
         movimiento=df["29"].where(df["55"] == "", df["40"]),
@@ -175,9 +183,9 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
             "fecha",
             "beneficiario",
             "cod_obra",
-            "obra",
+            "desc_obra",
             "destino",
-            "libramiento_sgf",
+            "nro_libramiento_sgf",
             "movimiento",
             "importe_bruto",
             "gcias",
@@ -198,10 +206,10 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
 
 def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
-    # 1. Lógica previa para 'obra' (ffill es clave para reportes con celdas combinadas)
-    titulo_reporte = df.iloc[0, 1]
 
-    if titulo_reporte != "Resumen de Certificaciones:":
+    # 1. Lógica previa para 'obra'
+    titulo_reporte = df.iloc[0, 1]
+    if not titulo_reporte.startswith("Resumen de Certificaciones"):
         return pd.DataFrame()  # O manejar el error según tu flujo
     # 2. Uso de assign (Equivalente a mutate de R)
     # Nota: Usamos np.where porque es más directo: np.where(condicion, valor_si_true, valor_si_false)
@@ -285,65 +293,68 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
         importe_neto=np.where(mask_totales, df["36"], df["35"]),
     )
 
-    # 3. Derivados de fecha y obra
-    df["ejercicio"] = df["fecha"].str[-4:]
-    df["mes"] = df["fecha"].str[3:5] + "/" + df["ejercicio"]
+    # # 3. Derivados de fecha y obra
+    # df["ejercicio"] = df["fecha"].str[-4:]
+    # df["mes"] = df["fecha"].str[3:5] + "/" + df["ejercicio"]
 
-    # Split seguro (si no hay "-" no rompe)
-    df[["cod_obra", "desc_obra"]] = df["obra"].str.split("-", n=1, expand=True)
-    df["cod_obra"] = df["cod_obra"].str.strip()
+    # # Split seguro (si no hay "-" no rompe)
+    # df[["cod_obra", "desc_obra"]] = df["obra"].str.split("-", n=1, expand=True)
+    # df["cod_obra"] = df["cod_obra"].str.strip()
 
-    # 4. Conversión Numérica Robusta
-    to_numeric_cols = [
-        "importe_bruto",
-        "gcias",
-        "sellos",
-        "lp",
-        "iibb",
-        "suss",
-        "seguro",
-        "salud",
-        "mutual",
-        "importe_neto",
-    ]
+    # # 4. Conversión Numérica Robusta
+    # to_numeric_cols = [
+    #     "importe_bruto",
+    #     "gcias",
+    #     "sellos",
+    #     "lp",
+    #     "iibb",
+    #     "suss",
+    #     "seguro",
+    #     "salud",
+    #     "mutual",
+    #     "importe_neto",
+    # ]
 
-    for col in to_numeric_cols:
-        # Reemplazamos vacíos por "0", quitamos comas y convertimos
-        df[col] = pd.to_numeric(
-            df[col].astype(str).str.replace(",", ""), errors="coerce"
-        ).fillna(0.0)
+    # for col in to_numeric_cols:
+    #     # Reemplazamos vacíos por "0", quitamos comas y convertimos
+    #     df[col] = pd.to_numeric(
+    #         df[col].astype(str).str.replace(",", ""), errors="coerce"
+    #     ).fillna(0.0)
 
-    # 5. Cálculo de Retenciones (Suma horizontal)
-    cols_to_sum = [
-        c for c in to_numeric_cols if c not in ["importe_neto", "importe_bruto"]
-    ]
-    df["retenciones"] = df[cols_to_sum].sum(axis=1)
+    # # 5. Cálculo de Retenciones (Suma horizontal)
+    # cols_to_sum = [
+    #     c for c in to_numeric_cols if c not in ["importe_neto", "importe_bruto"]
+    # ]
+    # df["retenciones"] = df[cols_to_sum].sum(axis=1)
 
-    # 6. Formateo de fecha para MongoDB (evita errores de string)
-    df["fecha"] = pd.to_datetime(df["fecha"], format="%d/%m/%Y", errors="coerce")
+    # # 6. Formateo de fecha para MongoDB (evita errores de string)
+    # df["fecha"] = pd.to_datetime(df["fecha"], format="%d/%m/%Y", errors="coerce")
 
-    # 7. Selección final (transmute style)
-    cols_finales = [
-        "ejercicio",
-        "mes",
-        "fecha",
-        "beneficiario",
-        "cod_obra",
-        "obra",
-        "destino",
-        "libramiento_sgf",
-        "movimiento",
-        "importe_bruto",
-        "gcias",
-        "sellos",
-        "lp",
-        "iibb",
-        "suss",
-        "seguro",
-        "salud",
-        "mutual",
-        "retenciones",
-        "importe_neto",
-    ]
+    # # 7. Selección final (transmute style)
+    # df = df.loc[
+    #     :,
+    #     [
+    #         "ejercicio",
+    #         "mes",
+    #         "fecha",
+    #         "beneficiario",
+    #         "cod_obra",
+    #         "desc_obra",
+    #         "destino",
+    #         "nro_libramiento_sgf",
+    #         "movimiento",
+    #         "importe_bruto",
+    #         "gcias",
+    #         "sellos",
+    #         "lp",
+    #         "iibb",
+    #         "suss",
+    #         "seguro",
+    #         "salud",
+    #         "mutual",
+    #         "retenciones",
+    #         "importe_neto",
+    #     ],
+    # ]
 
-    return df[cols_finales]
+    return df
