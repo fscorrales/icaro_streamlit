@@ -259,24 +259,30 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     #     arrange(desc(TipoComprobanteSIIF), desc(NroComprobanteSIIF),
     #             Beneficiario, Obra, NroCertificado)
 
-    cond = df["37"] == "TOTALES"
+    mask_totales = (df["37"] == "TOTALES") | (df["48"] == "TOTALES")
+
+    periodo_valor = str(df["2"].iloc[0])[-4:]
 
     df = df.assign(
-        beneficiario=np.where(cond, df["25"], df["36"]),
-        libramiento_sgf=np.where(cond, df["26"], df["37"]),
-        destino=np.where(cond, df["27"], df["38"]),
-        fecha=np.where(cond, df["28"], df["39"]),
-        movimiento=np.where(cond, df["29"], df["40"]),
-        importe_bruto=np.where(cond, df["39"], df["50"]),
-        gcias=np.where(cond, df["31"], df["42"]),
-        sellos=np.where(cond, df["32"], df["43"]),
-        lp=np.where(cond, df["33"], df["44"]),
-        iibb=np.where(cond, df["34"], df["45"]),
-        suss=np.where(cond, df["35"], df["46"]),
-        seguro=np.where(cond, df["36"], df["47"]),
-        salud=np.where(cond, df["37"], df["48"]),
-        mutual=np.where(cond, df["38"], df["49"]),
-        importe_neto=np.where(cond, df["30"], df["41"]),
+        nro_comprobante_siif="",
+        tipo_comprobante_siif="",
+        origen="Obras",
+        periodo=periodo_valor,
+        # Lógica de desplazamiento
+        beneficiario=np.where(mask_totales, df["21"], np.nan),
+        obra=np.where(mask_totales, df["22"], df["21"]),
+        nro_certificado=np.where(mask_totales, df["23"], df["22"]),
+        monto_certificado=np.where(mask_totales, df["26"], df["25"]),
+        fondo_de_reparo=np.where(mask_totales, df["27"], df["26"]),
+        otros=np.where(mask_totales, df["28"], df["27"]),
+        importe_bruto=np.where(mask_totales, df["29"], df["28"]),
+        iibb=np.where(mask_totales, df["30"], df["29"]),
+        lp=np.where(mask_totales, df["31"], df["30"]),
+        suss=np.where(mask_totales, df["32"], df["31"]),
+        gcias=np.where(mask_totales, df["33"], df["32"]),
+        invico=np.where(mask_totales, df["34"], df["33"]),
+        retenciones=np.where(mask_totales, df["35"], df["34"]),
+        importe_neto=np.where(mask_totales, df["36"], df["35"]),
     )
 
     # 3. Derivados de fecha y obra

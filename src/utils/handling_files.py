@@ -39,8 +39,10 @@ def read_xls(PATH: str, header: int = 0) -> pd.DataFrame:
 def read_csv_file(file_path: Union[Path, str, BytesIO]) -> pd.DataFrame:
     """Read csv file"""
     try:
+        nombres_columnas = [str(i) for i in range(100)]
         df = pd.read_csv(
             file_path,
+            names=nombres_columnas,  # Forzamos a que acepte hasta 100 columnas
             index_col=None,
             header=None,
             na_filter=False,
