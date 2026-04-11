@@ -315,7 +315,7 @@ def report_template_without_filters(
                             else:
                                 st.balloons()
                                 st.session_state[f"{key}_uploader_iteration"] += 1
-                                time.sleep(5)
+                                time.sleep(3)
                                 st.rerun()
 
     # Sincronizamos con el session_state para que 'render' lo vea

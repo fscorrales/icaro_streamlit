@@ -125,7 +125,7 @@ def process_resumen_rend_prov(dataframe: pd.DataFrame) -> pd.DataFrame:
 def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
 
-    titulo_reporte = df.iloc[0, 1]
+    titulo_reporte = str(df.iloc[0, 1])
     if not titulo_reporte.startswith("Resumen de Rendiciones"):
         return pd.DataFrame()
 
@@ -215,80 +215,23 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
 
     # 1. Lógica previa para 'obra'
-    titulo_reporte = df.iloc[0, 1]
+    titulo_reporte = str(df.iloc[0, 1])
     if not titulo_reporte.startswith("Resumen de Certificaciones"):
         return pd.DataFrame()  # O manejar el error según tu flujo
     # 2. Uso de assign (Equivalente a mutate de R)
-    # Nota: Usamos np.where porque es más directo: np.where(condicion, valor_si_true, valor_si_false)
-
-    #   BD <- BD %>%
-    #     transmute(NroComprobanteSIIF = "",
-    #               TipoComprobanteSIIF = "",
-    #               Origen = "Obras",
-    #               Periodo = str_sub(X3[1], -4),
-    #               Beneficiario = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X22, NA),
-    #               Obra = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X23, X22),
-    #               CodigoObra = str_sub(Obra, 0, 9),
-    #               NroCertificado = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X24, X23),
-    #               NoSe = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X25, X24),
-    #               NoSe2 = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X26, X25),
-    #               MontoCertificado = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X27, X26),
-    #               FondoDeReparo = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X28, X27),
-    #               Otros = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X29, X28),
-    #               ImporteBruto = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X30, X29),
-    #               IIBB = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X31, X30),
-    #               LP = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X32, X31),
-    #               SUSS = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X33, X32),
-    #               Gcias = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X34, X33),
-    #               INVICO = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X35, X34),
-    #               Retenciones = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X36, X35),
-    #               ImporteNeto = ifelse(X38 == "TOTALES" | X49 == "TOTALES", X37, X36)) %>%
-    #     select(-NoSe, -NoSe2) %>%
-    #     zoo::na.locf()
-
-    #   BD <- BD %>%
-    #     mutate(MontoCertificado = parse_number(MontoCertificado),
-    #            FondoDeReparo = parse_number(FondoDeReparo),
-    #            Otros = parse_number(Otros),
-    #            ImporteBruto = parse_number(ImporteBruto),
-    #            IIBB = parse_number(IIBB),
-    #            LP = parse_number(LP),
-    #            SUSS = parse_number(SUSS),
-    #            Gcias = parse_number(Gcias),
-    #            INVICO = parse_number(INVICO),
-    #            Retenciones = parse_number(Retenciones),
-    #            ImporteNeto = parse_number(ImporteNeto)) %>%
-    #     select(-Retenciones, -CodigoObra, -Otros)
-
-    #   if (ExisteTablaBD("CERTIFICADOS")) {
-    #     DatosDepurados <- FiltrarBD(
-    #       paste0("SELECT * FROM CERTIFICADOS WHERE NroComprobanteSIIF <> ''")
-    #     )
-    #     DatosDepurados <- DatosDepurados %>%
-    #       bind_rows(BD)
-    #   } else {
-    #     DatosDepurados <- BD
-    #   }
-
-    #   DatosDepurados <- DatosDepurados %>%
-    #     arrange(desc(TipoComprobanteSIIF), desc(NroComprobanteSIIF),
-    #             Beneficiario, Obra, NroCertificado)
-
     mask_totales = (df["37"] == "TOTALES") | (df["48"] == "TOTALES")
 
     periodo_valor = str(df["2"].iloc[0])[-4:]
 
     df = df.assign(
-        nro_comprobante_siif="",
-        tipo_comprobante_siif="",
-        origen="Obras",
-        periodo=periodo_valor,
+        id_carga="",
+        ejercicio=periodo_valor,
         # Lógica de desplazamiento
         beneficiario=np.where(mask_totales, df["21"], np.nan),
-        obra=np.where(mask_totales, df["22"], df["21"]),
+        desc_obra=np.where(mask_totales, df["22"], df["21"]),
         nro_certificado=np.where(mask_totales, df["23"], df["22"]),
         monto_certificado=np.where(mask_totales, df["26"], df["25"]),
-        fondo_de_reparo=np.where(mask_totales, df["27"], df["26"]),
+        fondo_reparo=np.where(mask_totales, df["27"], df["26"]),
         otros=np.where(mask_totales, df["28"], df["27"]),
         importe_bruto=np.where(mask_totales, df["29"], df["28"]),
         iibb=np.where(mask_totales, df["30"], df["29"]),
@@ -300,68 +243,49 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
         importe_neto=np.where(mask_totales, df["36"], df["35"]),
     )
 
-    # # 3. Derivados de fecha y obra
-    # df["ejercicio"] = df["fecha"].str[-4:]
-    # df["mes"] = df["fecha"].str[3:5] + "/" + df["ejercicio"]
+    df["beneficiario"] = df["beneficiario"].ffill()
 
-    # # Split seguro (si no hay "-" no rompe)
-    # df[["cod_obra", "desc_obra"]] = df["obra"].str.split("-", n=1, expand=True)
-    # df["cod_obra"] = df["cod_obra"].str.strip()
+    # 4. Conversión Numérica Robusta
+    to_numeric_cols = [
+        "monto_certificado",
+        "fondo_reparo",
+        "otros",
+        "importe_bruto",
+        "gcias",
+        "lp",
+        "iibb",
+        "suss",
+        "invico",
+        "retenciones",
+        "importe_neto",
+    ]
 
-    # # 4. Conversión Numérica Robusta
-    # to_numeric_cols = [
-    #     "importe_bruto",
-    #     "gcias",
-    #     "sellos",
-    #     "lp",
-    #     "iibb",
-    #     "suss",
-    #     "seguro",
-    #     "salud",
-    #     "mutual",
-    #     "importe_neto",
-    # ]
+    for col in to_numeric_cols:
+        # Reemplazamos vacíos por "0", quitamos comas y convertimos
+        df[col] = pd.to_numeric(
+            df[col].astype(str).str.replace(",", ""), errors="coerce"
+        ).fillna(0.0)
 
-    # for col in to_numeric_cols:
-    #     # Reemplazamos vacíos por "0", quitamos comas y convertimos
-    #     df[col] = pd.to_numeric(
-    #         df[col].astype(str).str.replace(",", ""), errors="coerce"
-    #     ).fillna(0.0)
-
-    # # 5. Cálculo de Retenciones (Suma horizontal)
-    # cols_to_sum = [
-    #     c for c in to_numeric_cols if c not in ["importe_neto", "importe_bruto"]
-    # ]
-    # df["retenciones"] = df[cols_to_sum].sum(axis=1)
-
-    # # 6. Formateo de fecha para MongoDB (evita errores de string)
-    # df["fecha"] = pd.to_datetime(df["fecha"], format="%d/%m/%Y", errors="coerce")
-
-    # # 7. Selección final (transmute style)
-    # df = df.loc[
-    #     :,
-    #     [
-    #         "ejercicio",
-    #         "mes",
-    #         "fecha",
-    #         "beneficiario",
-    #         "cod_obra",
-    #         "desc_obra",
-    #         "destino",
-    #         "nro_libramiento_sgf",
-    #         "movimiento",
-    #         "importe_bruto",
-    #         "gcias",
-    #         "sellos",
-    #         "lp",
-    #         "iibb",
-    #         "suss",
-    #         "seguro",
-    #         "salud",
-    #         "mutual",
-    #         "retenciones",
-    #         "importe_neto",
-    #     ],
-    # ]
+    df = df.loc[
+        :,
+        [
+            "ejercicio",
+            "beneficiario",
+            "desc_obra",
+            "nro_certificado",
+            "monto_certificado",
+            "fondo_reparo",
+            "otros",
+            "importe_bruto",
+            "iibb",
+            "lp",
+            "suss",
+            "gcias",
+            "invico",
+            "retenciones",
+            "importe_neto",
+            "id_carga",
+        ],
+    ]
 
     return df

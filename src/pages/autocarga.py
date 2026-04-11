@@ -24,7 +24,7 @@ REPORTE_EPAM = "epam"
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_data_certificados(filtro_avanzado: str = ""):
+def get_data_certificados(filtro_avanzado: str = "", update_trigger: int = 0):
     df = pd.DataFrame()
 
     params_peticion = {
@@ -35,7 +35,7 @@ def get_data_certificados(filtro_avanzado: str = ""):
     # Tabla Certificados
     df = fetch_dataframe(Endpoints.ICARO_INFORME_CONTABLE.value, params=params_peticion)
     if not df.empty:
-        df = df.loc[df["id_carga"] == ""]
+        # df = df.loc[df["id_carga"] == ""]
         df = df.sort_values(
             ["beneficiario", "desc_obra", "nro_certificado"],
             ascending=True,
@@ -46,7 +46,7 @@ def get_data_certificados(filtro_avanzado: str = ""):
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_data_epam(filtro_avanzado: str = "") -> pd.DataFrame:
+def get_data_epam(filtro_avanzado: str = "", update_trigger: int = 0) -> pd.DataFrame:
     df = pd.DataFrame()
 
     params_peticion = {
@@ -87,11 +87,14 @@ def render() -> None:
         filtro_actual = st.session_state.get(
             f"autocarga_{REPORTE_CERTIFICADOS}_advanced_filter", ""
         )
+        trigger = st.session_state.get(
+            f"autocarga_{REPORTE_CERTIFICADOS}_uploader_iteration", 0
+        )
 
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
         df_certificados = pd.DataFrame()
         try:
-            df_certificados = get_data_certificados(filtro_actual)
+            df_certificados = get_data_certificados(filtro_actual, trigger)
 
             if df_certificados.empty:
                 st.info("No se encontraron resultados.")
@@ -130,14 +133,17 @@ def render() -> None:
         )
 
         # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
-        filtro_actual = st.session_state.get(
+        filtro_actual_epam = st.session_state.get(
             f"autocarga_{REPORTE_EPAM}_advanced_filter", ""
+        )
+        trigger_epam = st.session_state.get(
+            f"autocarga_{REPORTE_EPAM}_uploader_iteration", 0
         )
 
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
         df_epam = pd.DataFrame()
         try:
-            df_epam = get_data_epam(filtro_actual)
+            df_epam = get_data_epam(filtro_actual_epam, trigger_epam)
 
             if df_epam.empty:
                 st.info("No se encontraron resultados.")
@@ -160,7 +166,7 @@ def render() -> None:
             dataframe_with_buttons(
                 df_epam,
                 key=f"{REPORTE_EPAM}_df_epam",
-                height=250,
+                height=300,
                 column_order=orden_dinamico,
             )
 
