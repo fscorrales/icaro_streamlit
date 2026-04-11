@@ -33,7 +33,7 @@ def get_data_certificados(filtro_avanzado: str = ""):
     }
 
     # Tabla Certificados
-    df = fetch_dataframe(Endpoints.ICARO_CERTIFICADOS.value, params=params_peticion)
+    df = fetch_dataframe(Endpoints.ICARO_INFORME_CONTABLE.value, params=params_peticion)
     if not df.empty:
         df = df.loc[df["id_carga"] == ""]
         df = df.sort_values(
@@ -77,7 +77,7 @@ def render() -> None:
             key=f"autocarga_{REPORTE_CERTIFICADOS}",
             title=REPORTE_CERTIFICADOS.capitalize(),
             description="Certificados del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
-            endpoint=Endpoints.ICARO_CERTIFICADOS.value,
+            endpoint=Endpoints.ICARO_INFORME_CONTABLE.value,
             has_export=True,
             has_upload=True,
             process_func=process_certificados_obras,
@@ -89,6 +89,7 @@ def render() -> None:
         )
 
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
+        df_certificados = pd.DataFrame()
         try:
             df_certificados = get_data_certificados(filtro_actual)
 
@@ -101,7 +102,6 @@ def render() -> None:
             st.error(f"⚠️ Error de API: {e}")
 
         # 4. Mostrar resultados (usando session_state para que no desaparezcan)
-        df_certificados = pd.DataFrame()
         if not df_certificados.empty:
             # Definimos las columnas que NO queremos mostrar
             columnas_a_excluir = ["id_carga", "updated_at", "id"]

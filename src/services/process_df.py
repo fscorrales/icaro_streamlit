@@ -128,13 +128,22 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     titulo_reporte = df.iloc[0, 1]
     if not titulo_reporte.startswith("Resumen de Rendiciones"):
         return pd.DataFrame()
-    df.loc[df["55"] != "", "obra"] = df["25"]
-    df.loc[df["obra"] == "", "obra"] = df["38"]
-    df["obra"] = df["obra"].ffill()
+
+    df["origen"] = df["6"].str.split("-", n=1).str[0]
+    df["origen"] = df["origen"].str.split("=", n=1).str[1]
+    df["origen"] = df["origen"].str.replace('"', "")
+    df["origen"] = df["origen"].str.strip()
+    if df["origen"].iloc[0] != "EPAM":
+        return pd.DataFrame()
+
+    df.loc[df["55"] != "", "desc_obra"] = df["25"]
+    df.loc[df["desc_obra"] == "", "desc_obra"] = df["38"]
+    df["desc_obra"] = df["desc_obra"].ffill()
     df = df.assign(
-        desc_obra=df["obra"],
+        origen=df["origen"],
+        desc_obra=df["desc_obra"],
         beneficiario=df["25"].where(df["55"] == "", df["36"]),
-        nro_libramiento_sgf=df["26"].where(df["55"] == "", df["37"]),
+        libramiento=df["26"].where(df["55"] == "", df["37"]),
         destino=df["27"].where(df["55"] == "", df["38"]),
         fecha=df["28"].where(df["55"] == "", df["39"]),
         movimiento=df["29"].where(df["55"] == "", df["40"]),
@@ -152,10 +161,8 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     )
     df["ejercicio"] = df["fecha"].str[-4:]
     df["mes"] = df["fecha"].str[3:5] + "/" + df["ejercicio"]
-    df[["cod_obra", "_"]] = df["obra"].str.split(pat="-", n=1, expand=True)
     df["fecha"] = pd.to_datetime(df["fecha"], format="%d/%m/%Y")
     df = df.replace(to_replace="", value="0")
-    df["cod_obra"] = df["cod_obra"].str.strip()
     to_numeric_cols = [
         "importe_bruto",
         "gcias",
@@ -178,14 +185,14 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = df.loc[
         :,
         [
+            "origen",
             "ejercicio",
             "mes",
             "fecha",
             "beneficiario",
-            "cod_obra",
             "desc_obra",
             "destino",
-            "nro_libramiento_sgf",
+            "libramiento",
             "movimiento",
             "importe_bruto",
             "gcias",
