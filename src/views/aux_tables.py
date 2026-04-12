@@ -7,6 +7,7 @@ __all__ = [
 ]
 
 import time
+from datetime import date
 from typing import Any, Optional
 
 import pandas as pd
@@ -30,6 +31,7 @@ from src.services import (
     post_request,
 )
 from src.utils import APIConnectionError, APIResponseError, read_csv_file
+from src.views.modals import modal_agregar_gasto
 
 
 # --------------------------------------------------
@@ -398,9 +400,15 @@ def dataframe_home_carga(
             gap="medium",
         ):
             if button_selfadd("Autocarga", key=f"btn_selfadd_{key}", type="primary"):
-                pass
+                # Suponiendo que tu archivo se llama pages/autocarga.py o similar
+                try:
+                    st.switch_page("src/pages/autocarga.py")  # <--- Esta es la clave
+                except Exception as e:
+                    st.error(f"No se pudo encontrar la página de autocarga: {e}")
             if button_add("Agregar", key=f"btn_add_{key}"):
-                pass
+                modal_agregar_gasto(
+                    key_prefix=f"add_gasto_{date.today().strftime('%Y%m%d%H%M%S')}"
+                )
             if button_edit("Editar", key=f"btn_edit_{key}"):
                 pass
             if button_delete("Borrar", key=f"btn_delete_{key}"):

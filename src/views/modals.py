@@ -193,13 +193,12 @@ def request_siif_and_sscc_credentials_modal(
 
 
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
-@st.dialog("Agregar Comprobante Gasto", width="large")
+@st.dialog("Agregar Comprobante Gasto", width="medium")
 def modal_agregar_gasto(key_prefix: str):
     """
     Réplica visual del formulario de la imagen.
     WIDTH='large' es clave para que las 4-5 columnas no se amontonen.
     """
-    st.caption("Complete los datos del nuevo comprobante de gasto.")
 
     # Usamos session_state para que los 'callbacks' de los selects carguen los 'Denominacion'
     # sin cerrar el modal por accidente.
@@ -332,26 +331,36 @@ def modal_agregar_gasto(key_prefix: str):
         key=f"{key_prefix}_monto",
     )
 
-    # Replicamos la cajita '%' de la imagen
-    with col6_2:
-        col6_2_1, col6_2_2 = st.columns([3, 1])
-        avance_fisico = col6_2_1.number_input(
-            "Avance Fisico Acum. %",
-            min_value=0.0,
-            max_value=100.0,
-            value=0.0,
-            step=0.01,
-            label_visibility="visible",
-            key=f"{key_prefix}_avance",
-        )
-        col6_2_2.markdown("## ")  # Alineación vertical
-        col6_2_2.markdown("## **%**")
+    avance_fisico = col6_2.number_input(
+        "Avance Fisico Acum. %",
+        min_value=0.0,
+        max_value=100.0,
+        value=0.0,
+        step=0.01,
+        label_visibility="visible",
+        key=f"{key_prefix}_avance",
+    )
+
+    # # Replicamos la cajita '%' de la imagen
+    # with col6_2:
+    #     col6_2_1, col6_2_2 = st.columns([3, 1])
+    #     avance_fisico = col6_2_1.number_input(
+    #         "Avance Fisico Acum. %",
+    #         min_value=0.0,
+    #         max_value=100.0,
+    #         value=0.0,
+    #         step=0.01,
+    #         label_visibility="visible",
+    #         key=f"{key_prefix}_avance",
+    #     )
+    #     col6_2_2.markdown("## ")  # Alineación vertical
+    #     col6_2_2.markdown("## **%**")
 
     nro_certificado = col6_3.text_input(
         "Nro Certificado", placeholder="Ej: Cert. N° 4", key=f"{key_prefix}_certificado"
     )
 
-    st.markdown("## ")  # Espaciado final
+    # st.markdown("## ")  # Espaciado final
 
     # FILA 7: BOTONES (Cancel, Agregar) Alineados a la Derecha
     # En Streamlit, esto es lo más difícil sin usar CSS Sucio. Usamos columnas para empujar a la derecha.
