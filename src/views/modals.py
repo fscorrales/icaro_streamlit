@@ -60,14 +60,16 @@ def modal_agregar_gasto(key_prefix: str):
     # FILA 3: Descripcion Obra (Ancho Completo con Info)
     # Reemplazá con tu consulta de obras activas
     df_obras = get_obras()
+    mapeo_obras = dict(zip(df_obras.desc_obra, df_obras.actividad))
 
     desc_obra = st.selectbox(
         "Descripcion Obra",
         index= None,
         placeholder="Elegir una Obra.",
         options=df_obras.desc_obra.to_list(),
-        help="Seleccione la obra asociada al gasto.",
+        format_func=lambda x: f"{x} ({mapeo_obras.get(x, '')})",
         key=f"{key_prefix}_obra",
+        help="Seleccione la obra asociada al gasto.",
     )
 
     # FILA 4: Cuenta Bancaria (2 Columnas: Select + Texto Disabled)
