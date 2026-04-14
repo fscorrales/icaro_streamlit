@@ -3,41 +3,19 @@ Author: Fernando Corrales <fscpython@gmail.com>
 Purpose: ICARO's Obras Page
 """
 
-import pandas as pd
 import streamlit as st
 
 from src.constants import Endpoints
-from src.services.api_client import (
-    APIConnectionError,
-    APIResponseError,
-    fetch_dataframe,
+from src.services import (
+    get_obras
 )
 from src.views import (
     dataframe_with_buttons,
     report_template_without_filters,
 )
+from src.utils import APIConnectionError, APIResponseError
 
 REPORTE = "obras"
-
-
-# --------------------------------------------------
-@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_data(filtro_avanzado: str = ""):
-    df = pd.DataFrame()
-
-    params_peticion = {
-        "limit": 0,
-        "queryFilter": filtro_avanzado,
-    }
-
-    # Tabla Obras
-    df = fetch_dataframe(Endpoints.ICARO_OBRAS.value, params=params_peticion)
-    if not df.empty:
-        df = df.sort_values(
-            ["actividad", "partida", "fuente", "desc_obra"], ascending=True
-        )
-
-    return df
 
 
 # --------------------------------------------------
@@ -55,7 +33,7 @@ def render() -> None:
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
-        df_obras = get_data(filtro_actual)
+        df_obras = get_obras(filtro_actual)
 
         if df_obras.empty:
             st.info("No se encontraron resultados.")

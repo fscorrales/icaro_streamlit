@@ -8,7 +8,8 @@ import streamlit as st
 
 from src.constants import Endpoints
 from src.services import (
-    fetch_dataframe,
+    get_autocarga_certificados,
+    get_autocarga_epam,
     process_certificados_obras,
     process_resumen_rend_obras,
 )
@@ -20,52 +21,6 @@ from src.views import (
 
 REPORTE_CERTIFICADOS = "certificados"
 REPORTE_EPAM = "epam"
-
-
-# --------------------------------------------------
-@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_data_certificados(filtro_avanzado: str = "", update_trigger: int = 0):
-    df = pd.DataFrame()
-
-    params_peticion = {
-        "limit": 0,
-        "queryFilter": filtro_avanzado,
-    }
-
-    # Tabla Certificados
-    df = fetch_dataframe(Endpoints.ICARO_INFORME_CONTABLE.value, params=params_peticion)
-    if not df.empty:
-        # df = df.loc[df["id_carga"] == ""]
-        df = df.sort_values(
-            ["beneficiario", "desc_obra", "nro_certificado"],
-            ascending=True,
-        )
-
-    return df
-
-
-# --------------------------------------------------
-@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_data_epam(filtro_avanzado: str = "", update_trigger: int = 0) -> pd.DataFrame:
-    df = pd.DataFrame()
-
-    params_peticion = {
-        "limit": 0,
-        "queryFilter": filtro_avanzado,
-    }
-
-    # Tabla Certificados
-    df = fetch_dataframe(
-        Endpoints.ICARO_RESUMEN_REND_OBRAS.value, params=params_peticion
-    )
-    # if not df.empty:
-    #     df = df.loc[df["id_carga"] == ""]
-    #     df = df.sort_values(
-    #         ["beneficiario", "desc_obra", "nro_certificado"],
-    #         ascending=True,
-    #     )
-
-    return df
 
 
 # --------------------------------------------------
@@ -94,7 +49,7 @@ def render() -> None:
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
         df_certificados = pd.DataFrame()
         try:
-            df_certificados = get_data_certificados(filtro_actual, trigger)
+            df_certificados = get_autocarga_certificados(filtro_actual, trigger)
 
             if df_certificados.empty:
                 st.info("No se encontraron resultados.")
@@ -143,7 +98,7 @@ def render() -> None:
         # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
         df_epam = pd.DataFrame()
         try:
-            df_epam = get_data_epam(filtro_actual_epam, trigger_epam)
+            df_epam = get_autocarga_epam(filtro_actual_epam, trigger_epam)
 
             if df_epam.empty:
                 st.info("No se encontraron resultados.")
