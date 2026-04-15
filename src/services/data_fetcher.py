@@ -1,10 +1,10 @@
 __all__ = [
-    "get_estructuras",
+    "get_ctas_ctes",
     "get_proveedores",
+    "get_estructuras",
     "get_obras",
     "get_autocarga_epam",
     "get_autocarga_certificados",
-    "get_ctas_ctes",
 ]
 
 import pandas as pd
@@ -15,7 +15,7 @@ from src.services.api_client import fetch_dataframe
 
 
 # --------------------------------------------------
-@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
+@st.cache_data(show_spinner="Consultando base de datos...", ttl=86400)
 def get_estructuras(filtro_avanzado: str = ""):
     df = pd.DataFrame()
 
@@ -33,7 +33,7 @@ def get_estructuras(filtro_avanzado: str = ""):
 
 
 # --------------------------------------------------
-@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
+@st.cache_data(show_spinner="Consultando base de datos...", ttl=86400)
 def get_proveedores(filtro_avanzado: str = ""):
     df = pd.DataFrame()
 
@@ -119,7 +119,7 @@ def get_autocarga_epam(
 
 
 # --------------------------------------------------
-@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
+@st.cache_data(show_spinner="Consultando base de datos...", ttl=86400)
 def get_ctas_ctes(filtro_avanzado: str = ""):
     df = pd.DataFrame()
 
