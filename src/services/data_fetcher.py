@@ -1,4 +1,11 @@
-__all__ = ["get_estructuras", "get_proveedores", "get_obras", "get_autocarga_epam", "get_autocarga_certificados"]
+__all__ = [
+    "get_estructuras",
+    "get_proveedores",
+    "get_obras",
+    "get_autocarga_epam",
+    "get_autocarga_certificados",
+    "get_ctas_ctes",
+]
 
 import pandas as pd
 import streamlit as st
@@ -24,6 +31,7 @@ def get_estructuras(filtro_avanzado: str = ""):
 
     return df
 
+
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
 def get_proveedores(filtro_avanzado: str = ""):
@@ -40,6 +48,7 @@ def get_proveedores(filtro_avanzado: str = ""):
         df = df.sort_values(["desc_proveedor"], ascending=True)
 
     return df
+
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
@@ -59,6 +68,7 @@ def get_obras(filtro_avanzado: str = ""):
         )
 
     return df
+
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
@@ -84,7 +94,9 @@ def get_autocarga_certificados(filtro_avanzado: str = "", update_trigger: int = 
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_autocarga_epam(filtro_avanzado: str = "", update_trigger: int = 0) -> pd.DataFrame:
+def get_autocarga_epam(
+    filtro_avanzado: str = "", update_trigger: int = 0
+) -> pd.DataFrame:
     df = pd.DataFrame()
 
     params_peticion = {
@@ -102,5 +114,24 @@ def get_autocarga_epam(filtro_avanzado: str = "", update_trigger: int = 0) -> pd
     #         ["beneficiario", "desc_obra", "nro_certificado"],
     #         ascending=True,
     #     )
+
+    return df
+
+
+# --------------------------------------------------
+@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
+def get_ctas_ctes(filtro_avanzado: str = ""):
+    df = pd.DataFrame()
+
+    params_peticion = {
+        "limit": 0,
+        "queryFilter": filtro_avanzado,
+    }
+
+    # Tabla Proveedores
+    df = fetch_dataframe(Endpoints.CTAS_CTES.value, params=params_peticion)
+    if not df.empty:
+        df = df.loc[df["icaro_cta_cte"] != ""]
+        df = df.sort_values(["map_to"], ascending=True)
 
     return df

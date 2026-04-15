@@ -5,7 +5,7 @@ from datetime import date
 import streamlit as st
 
 from src.constants import Endpoints
-from src.services import post_request, get_proveedores, get_obras
+from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request
 
 
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
@@ -49,7 +49,7 @@ def modal_agregar_gasto(key_prefix: str):
 
     cuit_contratista = st.selectbox(
         "Contratista",
-        index= None,
+        index=None,
         placeholder="Elegir un Contratista.",
         options=df_prov.cuit.to_list(),
         format_func=lambda x: f"{x} - {mapeo_contratistas.get(x, '')}",
@@ -64,7 +64,7 @@ def modal_agregar_gasto(key_prefix: str):
 
     desc_obra = st.selectbox(
         "Descripcion Obra",
-        index= None,
+        index=None,
         placeholder="Elegir una Obra.",
         options=df_obras.desc_obra.to_list(),
         format_func=lambda x: f"{x} ({mapeo_obras.get(x, '')})",
@@ -74,33 +74,17 @@ def modal_agregar_gasto(key_prefix: str):
 
     # FILA 4: Cuenta Bancaria (2 Columnas: Select + Texto Disabled)
     # Reemplazá con tus cuentas de INVICO
-    cuentas_bancarias = ["CUENTA 1234/5", "CUENTA 6789/0"]
-    denominaciones_cuentas = {
-        "CUENTA 1234/5": "CTA. CTE. BANCO CORRIENTES - FDO. PROPIO",
-        "CUENTA 6789/0": "CTA. CTE. BANCO NACION - FDO. NACIONAL",
-    }
+    df_ctas_ctes = get_ctas_ctes()
+    mapeo_ctas_ctes = dict(zip(df_ctas_ctes.icaro_cta_cte, df_ctas_ctes.desc_cta_cte))
 
-    col4_1, col4_2 = st.columns([1, 2])
-
-    # Callback para actualizar la denominación de forma reactiva
-    def update_denom_cuenta():
-        sel_cuenta = st.session_state[f"{key_prefix}_cuenta"]
-        st.session_state[f"{key_prefix}_denom_cuenta"] = denominaciones_cuentas.get(
-            sel_cuenta, "Elija una cuenta válida"
-        )
-
-    cuenta_bancaria = col4_1.selectbox(
+    cuenta_bancaria = st.selectbox(
         "Cuenta Bancaria",
-        options=["Elegir una opción"] + cuentas_bancarias,
+        index=None,
+        placeholder="Elegir una Cuenta Bancaria.",
+        options=df_ctas_ctes.icaro_cta_cte.to_list(),
+        format_func=lambda x: f"{x} ({mapeo_ctas_ctes.get(x, '')})",
         key=f"{key_prefix}_cuenta",
-        on_change=update_denom_cuenta,
-    )
-
-    denominacion_cuenta = col4_2.text_input(
-        "Denominacion Cuenta Bancaria",
-        value=st.session_state.get(f"{key_prefix}_denom_cuenta", ""),
-        disabled=True,
-        key=f"{key_prefix}_denom_cuenta_input",
+        # on_change=update_denom_cuenta,
     )
 
     # FILA 5: Fuente Financiamiento (2 Columnas: Select + Texto Disabled)
