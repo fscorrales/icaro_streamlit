@@ -2,6 +2,12 @@ import streamlit as st
 
 import src.utils.exceptions as ex
 from src.services.auth_service import get_current_user, login, register
+from src.services.data_fetcher import (
+    get_ctas_ctes,
+    get_estructuras,
+    get_obras,
+    get_proveedores,
+)
 
 
 # --------------------------------------------------
@@ -25,25 +31,42 @@ def render_login() -> None:
                 submitted = st.form_submit_button("Ingresar", width="stretch")
 
                 if submitted:
-                    with st.spinner("Autenticando en el Sistema..."):
-                        try:
+                    try:
+                        with st.spinner("Autenticando en el Sistema..."):
                             token = login(username, password)
-                            st.session_state["token"] = token
 
-                            user_data = get_current_user(token)
-                            st.session_state["user"] = {
-                                "role": user_data.role.value,
-                                "username": user_data.username,
-                                "id": user_data.id,
-                            }
-                            st.rerun()
+                        st.session_state["token"] = token
 
-                        except (
-                            ex.AppBaseException
-                        ) as e:  # Captura cualquier error definido por ti
-                            st.error(f"Error: {e}")
-                        except Exception as e:
-                            st.error(f"Ocurrió un error inesperado. {e}")
+                        user_data = get_current_user(token)
+                        st.session_state["user"] = {
+                            "role": user_data.role.value,
+                            "username": user_data.username,
+                            "id": user_data.id,
+                        }
+
+                        with st.status("Preparando ICARO...", expanded=True) as status:
+                            st.write("Sincronizando Estructuras...")
+                            get_estructuras()
+                            st.write("Sincronizando Obras...")
+                            get_obras()
+                            st.write("Cargando Proveedores...")
+                            get_proveedores()
+                            st.write("Verificando Cuentas Corrientes...")
+                            get_ctas_ctes()
+                            status.update(
+                                label="Sincronización Completa",
+                                state="complete",
+                                expanded=False,
+                            )
+
+                        st.rerun()
+
+                    except (
+                        ex.AppBaseException
+                    ) as e:  # Captura cualquier error definido por ti
+                        st.error(f"Error: {e}")
+                    except Exception as e:
+                        st.error(f"Ocurrió un error inesperado. {e}")
 
         with tab_register:
             st.info("Complete los datos para crear una nueva cuenta.")

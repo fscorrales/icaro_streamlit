@@ -3,6 +3,8 @@ __all__ = [
     "get_src_path",
     "get_app_path",
     "get_outside_path",
+    "get_cache_path",
+    "get_secure_cache_path",
     "get_download_path",
     "get_download_sgf_path",
     "get_download_sscc_path",
@@ -32,6 +34,7 @@ def get_src_path():
     dir_path = os.path.dirname(dir_path)
     return dir_path
 
+
 # --------------------------------------------------
 def get_app_path():
     dir_path = os.path.dirname(get_src_path())
@@ -48,6 +51,25 @@ def get_outside_path():
 # def get_download_path():
 #     dir_path = os.path.join(get_outside_path(), "Reportes Descargados")
 #     return dir_path
+
+
+# --------------------------------------------------
+def get_cache_path():
+    dir_path = os.path.join(get_app_path(), ".cache")
+    # Aseguramos que la carpeta exista antes de devolver la ruta
+    if not os.path.exists(dir_path):
+        os.makedirs(dir_path, exist_ok=True)
+    return dir_path
+
+
+# --------------------------------------------------
+def get_secure_cache_path():
+    # Usa LOCALAPPDATA para evitar problemas de permisos en Windows
+    app_data = os.environ.get("LOCALAPPDATA", os.path.expanduser("~"))
+    dir_path = os.path.join(app_data, "ICARO", ".cache")
+    os.makedirs(dir_path, exist_ok=True)
+    return dir_path
+
 
 # --------------------------------------------------
 def get_download_path():
@@ -128,6 +150,8 @@ def main():
     print(f"Src Path: {get_src_path()}")
     print(f"App Path: {get_app_path()}")
     print(f"Outside Path: {get_outside_path()}")
+    print(f"Cache Path: {get_cache_path()}")
+    print(f"Secure Cache Path: {get_secure_cache_path()}")
     print(f"Download Path: {get_download_path()}")
     print(f"Download SGF Path: {get_download_sgf_path()}")
     print(f"Download SSCC Path: {get_download_sscc_path()}")
