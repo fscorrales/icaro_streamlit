@@ -13,19 +13,23 @@ from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request
 @st.dialog("Agregar Comprobante Gasto", width="medium")
 def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     # LIMPIEZA DE ESTADO: Si es un alta nueva, borramos rastros de ediciones previas
-    if datos_edicion is None:
-        keys_a_limpiar = [
-            f"{key_prefix}_nro",
-            f"{key_prefix}_fecha",
-            f"{key_prefix}_cuit",
-            f"{key_prefix}_obra",
-            f"{key_prefix}_cuenta",
-            f"{key_prefix}_cuenta_index",  # Fundamental borrar este
-            f"{key_prefix}_refresh_cuenta",
-        ]
-        for k in keys_a_limpiar:
-            if k in st.session_state:
-                del st.session_state[k]
+    # keys_a_limpiar = [
+    #     f"{key_prefix}_nro",
+    #     f"{key_prefix}_fecha",
+    #     f"{key_prefix}_cuit",
+    #     f"{key_prefix}_obra",
+    #     f"{key_prefix}_cuenta",
+    #     f"{key_prefix}_cuenta_index",  # Fundamental borrar este
+    #     f"{key_prefix}_refresh_cuenta",
+    #     f"{key_prefix}_cuenta_{st.session_state.get(f'{key_prefix}_refresh_cuenta', 0)}",
+    #     f"{key_prefix}_fuente",
+    #     f"{key_prefix}_fuente_index",  # Fundamental borrar este
+    #     f"{key_prefix}_refresh_fuente",
+    #     f"{key_prefix}_fuente_{st.session_state.get(f'{key_prefix}_refresh_fuente', 0)}",
+    # ]
+    # for k in keys_a_limpiar:
+    #     if k in st.session_state:
+    #         del st.session_state[k]
 
     # Si datos_edicion existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_edicion if datos_edicion else {}
@@ -35,7 +39,7 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     df_ctas_ctes = get_ctas_ctes()
     df_prov = get_proveedores()
 
-    # Inicializamos el cta_cte índice en el state si no existe
+    # Inicializamos el índice de cta_cte en el state si no existe
     if f"{key_prefix}_cuenta_index" not in st.session_state:
         # Si estamos editando, buscamos el índice de la cuenta que ya traía el registro
         cta_previa = form_data.get("cta_cte")
@@ -52,6 +56,23 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     if f"{key_prefix}_refresh_cuenta" not in st.session_state:
         st.session_state[f"{key_prefix}_refresh_cuenta"] = 0
 
+    # Inicializamos el índice de fuente en el state si no existe
+    if f"{key_prefix}_fuente_index" not in st.session_state:
+        # Si estamos editando, buscamos el índice de la cuenta que ya traía el registro
+        fuente_previa = form_data.get("fuente")
+        lista_fuentes = ["10", "11", "13"]
+
+        if fuente_previa in lista_fuentes:
+            st.session_state[f"{key_prefix}_fuente_index"] = lista_fuentes.index(
+                fuente_previa
+            )
+        else:
+            st.session_state[f"{key_prefix}_fuente_index"] = None
+
+    # Inicializá el contador al principio del modal
+    if f"{key_prefix}_refresh_fuente" not in st.session_state:
+        st.session_state[f"{key_prefix}_refresh_fuente"] = 0
+
     # Definimos la función de actualización del cta_cte sugerido
     def handle_obra_change():
         obra_elegida = st.session_state.get(f"{key_prefix}_obra")
@@ -60,9 +81,8 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
                 # Buscamos la cta_cte sugerida
                 fila_obra = df_obras[df_obras.desc_obra == obra_elegida]
                 if not fila_obra.empty:
-                    cta_sugerida = fila_obra["cta_cte"].iloc[0]
-
                     # Buscamos el índice en la lista de cuentas
+                    cta_sugerida = fila_obra["cta_cte"].iloc[0]
                     lista_cuentas = df_ctas_ctes.icaro_cta_cte.to_list()
                     if cta_sugerida in lista_cuentas:
                         # Actualizamos el índice
@@ -73,8 +93,22 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
                         st.session_state[f"{key_prefix}_refresh_cuenta"] += 1
                     else:
                         st.session_state[f"{key_prefix}_cuenta_index"] = None
+
+                    # Buscamos el índice en la lista de fuentes
+                    fuente_sugerida = fila_obra["fuente"].iloc[0]
+                    lista_fuentes = ["10", "11", "13"]
+                    if fuente_sugerida in lista_fuentes:
+                        # Actualizamos el índice
+                        st.session_state[f"{key_prefix}_fuente_index"] = (
+                            lista_fuentes.index(fuente_sugerida)
+                        )
+                        # INCREMENTAMOS un disparador de refresco
+                        st.session_state[f"{key_prefix}_refresh_fuente"] += 1
+                    else:
+                        st.session_state[f"{key_prefix}_fuente_index"] = None
+
             except Exception as e:
-                st.session_state[f"{key_prefix}_cuenta_index"] = None
+                st.session_state[f"{key_prefix}_fuente_index"] = None
 
     # FILA 1: 4 Columnas (Nro, Fecha, Nro ICARO, Tipo)
     col1_1, col1_2, col1_3, col1_4 = st.columns([2, 2, 2, 1])
@@ -109,7 +143,7 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
 
     # FILA 2: CUIT Contratista (Ancho Completo con Info)
     # Creamos un diccionario donde la clave es el CUIT y el valor es el Nombre
-    # Esto hace que el mapeo en format_func sea instantáneo (O(1))
+    # Esto hace que el mapeo en format_func sea instantáneo
     lista_cuit = df_prov.cuit.to_list()
     cuit_previo = form_data.get("cuit")
     idx_cuit = lista_cuit.index(cuit_previo) if cuit_previo in lista_cuit else None
@@ -151,11 +185,11 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         st.caption(f"**Descripción:** {desc_obra}")
         # st.caption(f"**Imputación:** {mapeo_obras.get(desc_obra, '')}")
 
-    # FILA 4: Cuenta Bancaria (2 Columnas: Select + Texto Disabled)
-    # Reemplazá con tus cuentas de INVICO
+    # FILA 4: Cuenta Bancaria + Fuente Financiamiento
+    col4_1, col4_2 = st.columns(2)
     mapeo_ctas_ctes = dict(zip(df_ctas_ctes.icaro_cta_cte, df_ctas_ctes.desc_cta_cte))
 
-    cuenta_bancaria = st.selectbox(
+    cuenta_bancaria = col4_1.selectbox(
         "Cuenta Bancaria",
         index=st.session_state[f"{key_prefix}_cuenta_index"],
         placeholder="Elegir una Cuenta Bancaria.",
@@ -164,36 +198,21 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         key=f"{key_prefix}_cuenta_{st.session_state.get(f'{key_prefix}_refresh_cuenta', 0)}",
     )
 
-    # FILA 5: Fuente Financiamiento (2 Columnas: Select + Texto Disabled)
+    # FILA 5: Fuente Financiamiento
     # Reemplazá con tus fuentes de INVICO
-    fuentes_fin = ["Fto. 10", "Fto. 11", "Fto. 13"]
-    denominaciones_fuentes = {
-        "Fto. 10": "TESORO PROVINCIAL",
-        "Fto. 11": "RECURSOS PROPIOS",
-        "Fto. 13": "FONAVI",
-    }
+    # fuentes_fin = ["Fto. 10", "Fto. 11", "Fto. 13"]
+    # denominaciones_fuentes = {
+    #     "Fto. 10": "TESORO PROVINCIAL",
+    #     "Fto. 11": "RECURSOS PROPIOS",
+    #     "Fto. 13": "FONAVI",
+    # }
 
-    col5_1, col5_2 = st.columns([1, 2])
-
-    # Callback para la fuente
-    def update_denom_fuente():
-        sel_fuente = st.session_state[f"{key_prefix}_fuente"]
-        st.session_state[f"{key_prefix}_denom_fuente"] = denominaciones_fuentes.get(
-            sel_fuente, "Elija una fuente válida"
-        )
-
-    fuente_fin = col5_1.selectbox(
+    fuente = col4_2.selectbox(
         "Fuente Financiamiento",
-        options=["Elegir una opción"] + fuentes_fin,
-        key=f"{key_prefix}_fuente",
-        on_change=update_denom_fuente,
-    )
-
-    denominacion_fuente = col5_2.text_input(
-        "Denominacion Fuente",
-        value=st.session_state.get(f"{key_prefix}_denom_fuente", ""),
-        disabled=True,
-        key=f"{key_prefix}_denom_fuente_input",
+        index=st.session_state[f"{key_prefix}_fuente_index"],
+        placeholder="Elegir una Fuente de Financiamiento.",
+        options=["10", "11", "13"],
+        key=f"{key_prefix}_fuente_{st.session_state.get(f'{key_prefix}_refresh_fuente', 0)}",
     )
 
     # FILA 6: Monto Bruto, Avance Fisico, Nro Certificado
