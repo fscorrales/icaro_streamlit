@@ -5,15 +5,15 @@ Purpose: ICARO's Proveedores Page
 
 import streamlit as st
 
+from src.components import dataframe
 from src.constants import Endpoints
 from src.services import (
     get_proveedores,
 )
+from src.utils import APIConnectionError, APIResponseError
 from src.views import (
-    dataframe_with_buttons,
     report_template_without_filters,
 )
-from src.utils import APIConnectionError, APIResponseError
 
 REPORTE = "proveedores"
 
@@ -48,19 +48,20 @@ def render() -> None:
 
     # 4. Mostrar resultados (usando session_state para que no desaparezcan)
     if not df_proveedores.empty:
-        dataframe_with_buttons(
-            df_proveedores,
-            key=f"{REPORTE}_df_proveedores",
-            height=300,
-            column_order=[
-                "cuit",
-                "codigo",
-                "desc_proveedor",
-                "domicilio",
-                "localidad",
-                "condicion_iva",
-            ],
-        )
+        with st.container(horizontal=False, border=True, width="stretch"):
+            dataframe(
+                df_proveedores,
+                key=f"{REPORTE}_df_proveedores",
+                height=300,
+                column_order=[
+                    "cuit",
+                    "codigo",
+                    "desc_proveedor",
+                    "domicilio",
+                    "localidad",
+                    "condicion_iva",
+                ],
+            )
 
 
 if __name__ == "__main__":
