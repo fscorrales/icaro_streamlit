@@ -410,7 +410,13 @@ def dataframe_home_carga(
                     key_prefix=f"add_gasto_{date.today().strftime('%Y%m%d%H%M%S')}"
                 )
             if button_edit("Editar", key=f"btn_edit_{key}"):
-                pass
+                if len(event.selection.rows) > 0:
+                    selected_row_index = event.selection.rows[0]
+                    datos_edicion = df_carga.iloc[selected_row_index].to_dict()
+                    modal_agregar_gasto(
+                        key_prefix=f"edit_gasto_{date.today().strftime('%Y%m%d%H%M%S')}",
+                        datos_edicion=datos_edicion,
+                    )
             if button_delete("Borrar", key=f"btn_delete_{key}"):
                 pass
 

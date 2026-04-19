@@ -12,10 +12,20 @@ from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
 @st.dialog("Agregar Comprobante Gasto", width="medium")
 def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
-    """
-    Réplica visual del formulario de la imagen.
-    WIDTH='large' es clave para que las 4-5 columnas no se amontonen.
-    """
+    # LIMPIEZA DE ESTADO: Si es un alta nueva, borramos rastros de ediciones previas
+    if datos_edicion is None:
+        keys_a_limpiar = [
+            f"{key_prefix}_nro",
+            f"{key_prefix}_fecha",
+            f"{key_prefix}_cuit",
+            f"{key_prefix}_obra",
+            f"{key_prefix}_cuenta",
+            f"{key_prefix}_cuenta_index",  # Fundamental borrar este
+            f"{key_prefix}_refresh_cuenta",
+        ]
+        for k in keys_a_limpiar:
+            if k in st.session_state:
+                del st.session_state[k]
 
     # Si datos_edicion existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_edicion if datos_edicion else {}
@@ -25,7 +35,7 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     df_ctas_ctes = get_ctas_ctes()
     df_prov = get_proveedores()
 
-    # Inicializamos el índice en el state si no existe
+    # Inicializamos el cta_cte índice en el state si no existe
     if f"{key_prefix}_cuenta_index" not in st.session_state:
         # Si estamos editando, buscamos el índice de la cuenta que ya traía el registro
         cta_previa = form_data.get("cta_cte")
@@ -42,7 +52,7 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     if f"{key_prefix}_refresh_cuenta" not in st.session_state:
         st.session_state[f"{key_prefix}_refresh_cuenta"] = 0
 
-    # Definimos la función de actualización (fuera o dentro del render)
+    # Definimos la función de actualización del cta_cte sugerido
     def handle_obra_change():
         obra_elegida = st.session_state.get(f"{key_prefix}_obra")
         if obra_elegida:
@@ -72,7 +82,7 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     nro_comprobante = col1_1.text_input(
         "Nro Comprobante",
         key=f"{key_prefix}_nro",
-        value=form_data.get("nro_comprobante", ""),
+        value=form_data.get("nro_comprobante", "")[:5],
     )
 
     # Para el caso de la fecha, hay que convertirla a objeto date si viene como string
@@ -86,11 +96,15 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         "Nro ICARO",
         placeholder="Autogenerado",
         disabled=True,
+        value=form_data.get("nro_comprobante", ""),
         key=f"{key_prefix}_icaro",
     )
 
+    lista_tipos = ["CYO", "REG", "PA6"]
+    tipo_previo = form_data.get("tipo")
+    idx_tipo = lista_tipos.index(tipo_previo) if tipo_previo in lista_tipos else None
     tipo_gasto = col1_4.selectbox(
-        "Tipo", options=["CYO", "REG", "PA6"], index=0, key=f"{key_prefix}_tipo"
+        "Tipo", index=idx_tipo, options=lista_tipos, key=f"{key_prefix}_tipo"
     )
 
     # FILA 2: CUIT Contratista (Ancho Completo con Info)
