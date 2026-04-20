@@ -92,13 +92,15 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
                 st.session_state[f"{key_prefix}_fuente_index"] = None
 
     # FILA 1: 4 Columnas (Nro, Fecha, Nro ICARO, Tipo)
-    col1_1, col1_2, col1_3, col1_4 = st.columns([2, 2, 2, 1])
+    col1_1, col1_2, col1_3, col1_4 = st.columns([1, 2, 2, 1])
 
-    nro_comprobante = col1_1.text_input(
+    raw_nro = col1_1.text_input(
         "Nro Comprobante",
+        max_chars=5,
         key=f"{key_prefix}_nro",
         value=form_data.get("nro_comprobante", "")[:5],
     )
+    nro_solo_numeros = "".join(filter(str.isdigit, raw_nro))
 
     # Para el caso de la fecha, hay que convertirla a objeto date si viene como string
     fecha_previa = form_data.get("fecha", date.today())
@@ -106,20 +108,19 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         "Fecha", value=fecha_previa, format="DD-MM-YYYY", key=f"{key_prefix}_fecha"
     )
 
-    # El Nro ICARO suele ser autogenerado o gris en tu imagen
-    nro_icaro = col1_3.text_input(
-        "Nro ICARO",
-        placeholder="Autogenerado",
+    formato_contable = f"{nro_solo_numeros.zfill(5)}/{fecha.strftime('%y')}" if nro_solo_numeros else ""
+    nro_comprobante = col1_3.text_input(
+        "Nro Autogerado ICARO",
         disabled=True,
-        value=form_data.get("nro_comprobante", ""),
-        key=f"{key_prefix}_icaro",
+        value=formato_contable,
+        key=f"{key_prefix}_nro_comprobante_{formato_contable}",
     )
 
     lista_tipos = ["CYO", "REG", "PA6"]
     tipo_previo = form_data.get("tipo")
     idx_tipo = lista_tipos.index(tipo_previo) if tipo_previo in lista_tipos else None
-    tipo_gasto = col1_4.selectbox(
-        "Tipo", index=idx_tipo, options=lista_tipos, key=f"{key_prefix}_tipo"
+    tipo = col1_4.selectbox(
+        "Tipo", index=idx_tipo, options=lista_tipos, key=f"{key_prefix}_tipo", placeholder="",
     )
 
     # FILA 2: CUIT Contratista (Ancho Completo con Info)
@@ -130,7 +131,7 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     idx_cuit = lista_cuit.index(cuit_previo) if cuit_previo in lista_cuit else None
     mapeo_contratistas = dict(zip(df_prov.cuit, df_prov.desc_proveedor))
 
-    cuit_contratista = st.selectbox(
+    cuit = st.selectbox(
         "Contratista",
         index=idx_cuit,
         placeholder="Elegir un Contratista.",
@@ -142,19 +143,19 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
 
     # FILA 3: Descripcion Obra (Ancho Completo con Info)
     # Reemplazá con tu consulta de obras activas
-    lista_obras = df_prov.cuit.to_list()
+    lista_obras = df_obras.desc_obra.to_list()
     desc_obra_previo = form_data.get("desc_obra")
     idx_obra = (
         lista_obras.index(desc_obra_previo) if desc_obra_previo in lista_obras else None
     )
-
-    mapeo_obras = dict(zip(df_obras.desc_obra, df_obras.actividad))
+    imputaciones = [f"{act}-{part}" for act, part in zip(df_obras.actividad, df_obras.partida)]
+    mapeo_obras = dict(zip(df_obras.desc_obra, imputaciones))  # Mapeo para mostrar actividad y partida juntos
 
     desc_obra = st.selectbox(
         "Descripcion Obra",
         index=idx_obra,
         placeholder="Elegir una Obra.",
-        options=df_obras.desc_obra.to_list(),
+        options=lista_obras,
         format_func=lambda x: f"{x} ({mapeo_obras.get(x, '')})",
         key=f"{key_prefix}_obra",
         help="Seleccione la obra asociada al gasto.",
@@ -163,14 +164,22 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
 
     # Si hay una obra elegida, mostramos el "renglón extra" manualmente
     if desc_obra:
-        st.caption(f"**Descripción:** {desc_obra}")
+        imputacion_completa = mapeo_obras.get(desc_obra, "")
+        partes = imputacion_completa.split('-')
+        if len(partes) > 1:
+            partida = partes[-1]
+            # Reconstruimos la actividad uniendo todo lo anterior con guiones
+            actividad = "-".join(partes[:-1]) 
+        else:
+            actividad, partida = imputacion_completa, ""
+        st.caption(f"**Descripción:** {desc_obra} - **Estructura:** {imputacion_completa}")
         # st.caption(f"**Imputación:** {mapeo_obras.get(desc_obra, '')}")
 
     # FILA 4: Cuenta Bancaria + Fuente Financiamiento
     col4_1, col4_2 = st.columns(2)
     mapeo_ctas_ctes = dict(zip(df_ctas_ctes.icaro_cta_cte, df_ctas_ctes.desc_cta_cte))
 
-    cuenta_bancaria = col4_1.selectbox(
+    cta_cte = col4_1.selectbox(
         "Cuenta Bancaria",
         index=st.session_state[f"{key_prefix}_cuenta_index"],
         placeholder="Elegir una Cuenta Bancaria.",
@@ -178,15 +187,6 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         format_func=lambda x: f"{x} ({mapeo_ctas_ctes.get(x, '')})",
         key=f"{key_prefix}_cuenta_{st.session_state.get(f'{key_prefix}_refresh_cuenta', 0)}",
     )
-
-    # FILA 5: Fuente Financiamiento
-    # Reemplazá con tus fuentes de INVICO
-    # fuentes_fin = ["Fto. 10", "Fto. 11", "Fto. 13"]
-    # denominaciones_fuentes = {
-    #     "Fto. 10": "TESORO PROVINCIAL",
-    #     "Fto. 11": "RECURSOS PROPIOS",
-    #     "Fto. 13": "FONAVI",
-    # }
 
     fuente = col4_2.selectbox(
         "Fuente Financiamiento",
@@ -196,46 +196,31 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         key=f"{key_prefix}_fuente_{st.session_state.get(f'{key_prefix}_refresh_fuente', 0)}",
     )
 
-    # FILA 6: Monto Bruto, Avance Fisico, Nro Certificado
+    # FILA 5: Monto Bruto, Avance Fisico, Nro Certificado
     # Usamos numbers inputs y text inputs con formato para replicar la imagen.
-    col6_1, col6_2, col6_3 = st.columns([2, 1.5, 2])
+    col5_1, col5_2, col5_3 = st.columns([2, 1.5, 2])
 
-    monto_bruto = col6_1.number_input(
+    importe = col5_1.number_input(
         "Monto Bruto",
         min_value=0.0,
-        value=0.0,
+        value=form_data.get("importe", 0.0),
         step=1000.0,
         format="%.2f",
-        key=f"{key_prefix}_monto",
+        key=f"{key_prefix}_importe",
     )
 
-    avance_fisico = col6_2.number_input(
+    avance = col5_2.number_input(
         "Avance Fisico Acum. %",
         min_value=0.0,
         max_value=100.0,
-        value=0.0,
+        value=form_data.get("avance", 0.0) * 100,
         step=0.01,
         label_visibility="visible",
         key=f"{key_prefix}_avance",
     )
 
-    # # Replicamos la cajita '%' de la imagen
-    # with col6_2:
-    #     col6_2_1, col6_2_2 = st.columns([3, 1])
-    #     avance_fisico = col6_2_1.number_input(
-    #         "Avance Fisico Acum. %",
-    #         min_value=0.0,
-    #         max_value=100.0,
-    #         value=0.0,
-    #         step=0.01,
-    #         label_visibility="visible",
-    #         key=f"{key_prefix}_avance",
-    #     )
-    #     col6_2_2.markdown("## ")  # Alineación vertical
-    #     col6_2_2.markdown("## **%**")
-
-    nro_certificado = col6_3.text_input(
-        "Nro Certificado", placeholder="Ej: Cert. N° 4", key=f"{key_prefix}_certificado"
+    nro_certificado = col5_3.text_input(
+        "Nro Certificado", placeholder="", key=f"{key_prefix}_nro_certificado", value=form_data.get("nro_certificado", ""),
     )
 
     # st.markdown("## ")  # Espaciado final
@@ -255,64 +240,66 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
             # 1. Validación de Datos (Fundamental para INVICO)
             if (
                 nro_comprobante == ""
-                or cuit_contratista == "Elegir una opción"
+                or cuit == "Elegir una opción"
                 or desc_obra == "Elegir una opción del listado"
-                or cuenta_bancaria == "Elegir una opción"
-                or monto_bruto <= 0
+                or cta_cte == "Elegir una opción"
+                or importe <= 0
             ):
                 st.error("❌ Por favor complete todos los campos obligatorios.")
             else:
                 with st.spinner("Procesando y Guardando..."):
                     # 2. Preparación del payload para el POST
                     payload = {
-                        "nroComprobante": nro_comprobante.strip(),
+                        "ejercicio": int(fecha.year),
+                        "mes": f"{str(fecha.month).zfill(2)}/{str(fecha.year)}",
                         "fecha": fecha.strftime("%Y-%m-%d"),  # Formato ISO para MongoDB
-                        "tipo": tipo_gasto,
-                        "cuitContratista": cuit_contratista.strip(),
+                        "id_carga": f"{nro_comprobante}{tipo[:1]}",
+                        "nro_comprobante": nro_comprobante,
+                        "tipo": tipo,
+                        "fuente": fuente,
+                        "actividad": actividad,
+                        "partida": partida,
+                        "cta_cte": cta_cte,
+                        "cuit": cuit,
+                        "importe": importe,
+                        "fondo_reparo":0,
+                        "avance": avance,
+                        "nro_certificado": nro_certificado,
                         "descObra": desc_obra.strip(),
-                        "codObra": desc_obra.strip().split(" - ")[
-                            0
-                        ],  # Si tenés el cod_obra ahí
-                        "cuentaBancaria": cuenta_bancaria,
-                        "denomCuenta": denominacion_cuenta,
-                        "fuenteFin": fuente_fin,
-                        "denomFuente": denominacion_fuente,
-                        "montoBruto": monto_bruto,
-                        "avanceFisico": avance_fisico,
-                        "nroCertificado": nro_certificado.strip(),
+                        "origen": "Streamlit",
                         "updated_at": date.today().strftime("%Y-%m-%d %H:%M:%S"),
                     }
-
+                    print("Payload a enviar a ICARO:", payload)  # Debug: Ver el payload en la consola
                     # 3. Llamada al POST_REQUEST (Usando tus funciones existentes)
                     # Reemplazá 'carga' con la ruta real relativa a tu Endpoints.ICARO_CARGA
-                    try:
-                        res = post_request(
-                            endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
-                            json_body=payload,
-                        )
+                    # try:
+                    #     res = post_request(
+                    #         endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
+                    #         json_body=payload,
+                    #     )
 
-                        if res.status_code in [200, 201]:
-                            # Feedback visual como vimos antes
-                            st.balloons()
-                            st.toast(
-                                f"✅ Comprobante N° {nro_comprobante} agregado con éxito a ICARO.",
-                                icon="📈",
-                            )
+                    #     if res.status_code in [200, 201]:
+                    #         # Feedback visual como vimos antes
+                    #         st.balloons()
+                    #         st.toast(
+                    #             f"✅ Comprobante N° {nro_comprobante} agregado con éxito a ICARO.",
+                    #             icon="📈",
+                    #         )
 
-                            # Guardamos un flag para el rerun final si es necesario
-                            st.session_state[f"{key_prefix}_post_success"] = True
+                    #         # Guardamos un flag para el rerun final si es necesario
+                    #         st.session_state[f"{key_prefix}_post_success"] = True
 
-                            # Usamos un pequeño delay para que disfrute los globos y el toast
-                            import time
+                    #         # Usamos un pequeño delay para que disfrute los globos y el toast
+                    #         import time
 
-                            time.sleep(2)
-                            st.rerun()  # Esto cierra el modal y recarga la página principal
-                        else:
-                            st.error(f"⚠️ Error de API ({res.status_code}): {res.text}")
+                    #         time.sleep(2)
+                    #         st.rerun()  # Esto cierra el modal y recarga la página principal
+                    #     else:
+                    #         st.error(f"⚠️ Error de API ({res.status_code}): {res.text}")
 
-                    except Exception as e:
-                        # Usamos tu handler si lo tenés
-                        # handle_api_error(e)
-                        st.error(
-                            f"❌ Error de Conexión: No se pudo contactar con la API de ICARO. {e}"
-                        )
+                    # except Exception as e:
+                    #     # Usamos tu handler si lo tenés
+                    #     # handle_api_error(e)
+                    #     st.error(
+                    #         f"❌ Error de Conexión: No se pudo contactar con la API de ICARO. {e}"
+                    #     )
