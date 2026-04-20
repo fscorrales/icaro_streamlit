@@ -12,25 +12,6 @@ from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
 @st.dialog("Agregar Comprobante Gasto", width="medium")
 def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
-    # LIMPIEZA DE ESTADO: Si es un alta nueva, borramos rastros de ediciones previas
-    # keys_a_limpiar = [
-    #     f"{key_prefix}_nro",
-    #     f"{key_prefix}_fecha",
-    #     f"{key_prefix}_cuit",
-    #     f"{key_prefix}_obra",
-    #     f"{key_prefix}_cuenta",
-    #     f"{key_prefix}_cuenta_index",  # Fundamental borrar este
-    #     f"{key_prefix}_refresh_cuenta",
-    #     f"{key_prefix}_cuenta_{st.session_state.get(f'{key_prefix}_refresh_cuenta', 0)}",
-    #     f"{key_prefix}_fuente",
-    #     f"{key_prefix}_fuente_index",  # Fundamental borrar este
-    #     f"{key_prefix}_refresh_fuente",
-    #     f"{key_prefix}_fuente_{st.session_state.get(f'{key_prefix}_refresh_fuente', 0)}",
-    # ]
-    # for k in keys_a_limpiar:
-    #     if k in st.session_state:
-    #         del st.session_state[k]
-
     # Si datos_edicion existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_edicion if datos_edicion else {}
 

@@ -7,7 +7,7 @@ __all__ = [
 ]
 
 import time
-from datetime import date
+from datetime import datetime
 from typing import Any, Optional
 
 import pandas as pd
@@ -407,14 +407,14 @@ def dataframe_home_carga(
                     st.error(f"No se pudo encontrar la página de autocarga: {e}")
             if button_add("Agregar", key=f"btn_add_{key}"):
                 modal_agregar_gasto(
-                    key_prefix=f"add_gasto_{date.today().strftime('%Y%m%d%H%M%S')}"
+                    key_prefix=f"add_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}"
                 )
             if button_edit("Editar", key=f"btn_edit_{key}"):
                 if len(event.selection.rows) > 0:
                     selected_row_index = event.selection.rows[0]
                     datos_edicion = df_carga.iloc[selected_row_index].to_dict()
                     modal_agregar_gasto(
-                        key_prefix=f"edit_gasto_{date.today().strftime('%Y%m%d%H%M%S')}",
+                        key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                         datos_edicion=datos_edicion,
                     )
             if button_delete("Borrar", key=f"btn_delete_{key}"):
