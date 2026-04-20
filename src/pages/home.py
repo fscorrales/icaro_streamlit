@@ -172,6 +172,9 @@ def icaro_carga_template(
 
     # 4. Mostrar resultados (usando session_state para que no desaparezcan)
     if not df_carga.empty:
+        df_carga = df_carga.sort_values(
+            by=["fecha", "nro_comprobante"], ascending=False
+        ).reset_index(drop=True)
         event = dataframe_home_carga(df_carga, key=f"{key}_df_carga")
 
         # 2. Lógica de filtrado dinámico

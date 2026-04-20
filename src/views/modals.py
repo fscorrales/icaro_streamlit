@@ -1,9 +1,10 @@
 __all__ = ["modal_agregar_gasto"]
 
-from datetime import date
+from datetime import date, datetime
 
 import streamlit as st
 
+import src.utils.exceptions as ex
 from src.components import button_cancel, button_submit
 from src.constants import Endpoints
 from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request
@@ -94,13 +95,13 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     # FILA 1: 4 Columnas (Nro, Fecha, Nro ICARO, Tipo)
     col1_1, col1_2, col1_3, col1_4 = st.columns([1, 2, 2, 1])
 
-    raw_nro = col1_1.text_input(
+    raw_nro_comprobante = col1_1.text_input(
         "Nro Comprobante",
         max_chars=5,
         key=f"{key_prefix}_nro",
         value=form_data.get("nro_comprobante", "")[:5],
     )
-    nro_solo_numeros = "".join(filter(str.isdigit, raw_nro))
+    nro_solo_numeros = "".join(filter(str.isdigit, raw_nro_comprobante))
 
     # Para el caso de la fecha, hay que convertirla a objeto date si viene como string
     fecha_previa = form_data.get("fecha", date.today())
@@ -108,7 +109,11 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         "Fecha", value=fecha_previa, format="DD-MM-YYYY", key=f"{key_prefix}_fecha"
     )
 
-    formato_contable = f"{nro_solo_numeros.zfill(5)}/{fecha.strftime('%y')}" if nro_solo_numeros else ""
+    formato_contable = (
+        f"{nro_solo_numeros.zfill(5)}/{fecha.strftime('%y')}"
+        if nro_solo_numeros
+        else ""
+    )
     nro_comprobante = col1_3.text_input(
         "Nro Autogerado ICARO",
         disabled=True,
@@ -120,7 +125,11 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     tipo_previo = form_data.get("tipo")
     idx_tipo = lista_tipos.index(tipo_previo) if tipo_previo in lista_tipos else None
     tipo = col1_4.selectbox(
-        "Tipo", index=idx_tipo, options=lista_tipos, key=f"{key_prefix}_tipo", placeholder="",
+        "Tipo",
+        index=idx_tipo,
+        options=lista_tipos,
+        key=f"{key_prefix}_tipo",
+        placeholder="",
     )
 
     # FILA 2: CUIT Contratista (Ancho Completo con Info)
@@ -148,8 +157,12 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     idx_obra = (
         lista_obras.index(desc_obra_previo) if desc_obra_previo in lista_obras else None
     )
-    imputaciones = [f"{act}-{part}" for act, part in zip(df_obras.actividad, df_obras.partida)]
-    mapeo_obras = dict(zip(df_obras.desc_obra, imputaciones))  # Mapeo para mostrar actividad y partida juntos
+    imputaciones = [
+        f"{act}-{part}" for act, part in zip(df_obras.actividad, df_obras.partida)
+    ]
+    mapeo_obras = dict(
+        zip(df_obras.desc_obra, imputaciones)
+    )  # Mapeo para mostrar actividad y partida juntos
 
     desc_obra = st.selectbox(
         "Descripcion Obra",
@@ -165,14 +178,16 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
     # Si hay una obra elegida, mostramos el "renglón extra" manualmente
     if desc_obra:
         imputacion_completa = mapeo_obras.get(desc_obra, "")
-        partes = imputacion_completa.split('-')
+        partes = imputacion_completa.split("-")
         if len(partes) > 1:
             partida = partes[-1]
             # Reconstruimos la actividad uniendo todo lo anterior con guiones
-            actividad = "-".join(partes[:-1]) 
+            actividad = "-".join(partes[:-1])
         else:
             actividad, partida = imputacion_completa, ""
-        st.caption(f"**Descripción:** {desc_obra} - **Estructura:** {imputacion_completa}")
+        st.caption(
+            f"**Descripción:** {desc_obra} - **Estructura:** {imputacion_completa}"
+        )
         # st.caption(f"**Imputación:** {mapeo_obras.get(desc_obra, '')}")
 
     # FILA 4: Cuenta Bancaria + Fuente Financiamiento
@@ -213,14 +228,18 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
         "Avance Fisico Acum. %",
         min_value=0.0,
         max_value=100.0,
-        value=form_data.get("avance", 0.0) * 100,
-        step=0.01,
+        value=float(form_data.get("avance", 0.0) * 100),
+        step=10.0,
         label_visibility="visible",
+        format="%.2f",
         key=f"{key_prefix}_avance",
     )
 
     nro_certificado = col5_3.text_input(
-        "Nro Certificado", placeholder="", key=f"{key_prefix}_nro_certificado", value=form_data.get("nro_certificado", ""),
+        "Nro Certificado",
+        placeholder="",
+        key=f"{key_prefix}_nro_certificado",
+        value=form_data.get("nro_certificado", ""),
     )
 
     # st.markdown("## ")  # Espaciado final
@@ -237,15 +256,30 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
 
         # Botón AGREGAR (Primary, Color Principal)
         if button_submit("Agregar", key=f"{key_prefix}_btn_add"):
-            # 1. Validación de Datos (Fundamental para INVICO)
-            if (
-                nro_comprobante == ""
-                or cuit == "Elegir una opción"
-                or desc_obra == "Elegir una opción del listado"
-                or cta_cte == "Elegir una opción"
-                or importe <= 0
-            ):
-                st.error("❌ Por favor complete todos los campos obligatorios.")
+            # 1. Validación de Datos
+            errores = []
+            if raw_nro_comprobante is None:
+                errores.append(
+                    "El número de comprobante es obligatorio y debe ser numérico."
+                )
+            if not tipo or tipo == "":
+                errores.append("Debe seleccionar un Tipo de Comprobante.")
+            if not cuit or cuit == "":
+                errores.append("Debe seleccionar un Contratista.")
+            if not desc_obra or desc_obra == "":
+                errores.append("Debe seleccionar una Obra.")
+            if not cta_cte or cta_cte == "":
+                errores.append("Debe seleccionar una Cuenta Bancaria.")
+            if not fuente or fuente == "":
+                errores.append("Debe seleccionar una Fuente de Financiamiento.")
+            if importe <= 0:
+                errores.append("El importe debe ser mayor a $0.")
+            if avance < 0:
+                errores.append("El avance físico debe ser mayor o igual a 0%.")
+
+            if errores:
+                for err in errores:
+                    st.toast(err, icon="⚠️")
             else:
                 with st.spinner("Procesando y Guardando..."):
                     # 2. Preparación del payload para el POST
@@ -262,44 +296,48 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
                         "cta_cte": cta_cte,
                         "cuit": cuit,
                         "importe": importe,
-                        "fondo_reparo":0,
-                        "avance": avance,
+                        "fondo_reparo": 0,
+                        "avance": (avance / 100)
+                        if (avance > 0)
+                        else 0,  # Convertimos a decimal para la API
                         "nro_certificado": nro_certificado,
-                        "descObra": desc_obra.strip(),
-                        "origen": "Streamlit",
-                        "updated_at": date.today().strftime("%Y-%m-%d %H:%M:%S"),
+                        "desc_obra": desc_obra,
+                        "origen": form_data.get("origen", ""),
+                        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                     }
-                    print("Payload a enviar a ICARO:", payload)  # Debug: Ver el payload en la consola
+                    print(
+                        "Payload a enviar a ICARO:", payload
+                    )  # Debug: Ver el payload en la consola
                     # 3. Llamada al POST_REQUEST (Usando tus funciones existentes)
-                    # Reemplazá 'carga' con la ruta real relativa a tu Endpoints.ICARO_CARGA
-                    # try:
-                    #     res = post_request(
-                    #         endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
-                    #         json_body=payload,
-                    #     )
+                    try:
+                        res = post_request(
+                            endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
+                            json_body=payload,
+                        )
 
-                    #     if res.status_code in [200, 201]:
-                    #         # Feedback visual como vimos antes
-                    #         st.balloons()
-                    #         st.toast(
-                    #             f"✅ Comprobante N° {nro_comprobante} agregado con éxito a ICARO.",
-                    #             icon="📈",
-                    #         )
+                        # if res.status_code in [200, 201]:
+                        if res:
+                            # Feedback visual como vimos antes
+                            st.balloons()
+                            st.toast(
+                                f"✅ Comprobante N° {nro_comprobante} agregado con éxito a ICARO.",
+                                icon="📈",
+                            )
 
-                    #         # Guardamos un flag para el rerun final si es necesario
-                    #         st.session_state[f"{key_prefix}_post_success"] = True
+                            # Guardamos un flag para el rerun final si es necesario
+                            st.session_state[f"{key_prefix}_post_success"] = True
 
-                    #         # Usamos un pequeño delay para que disfrute los globos y el toast
-                    #         import time
+                            # Usamos un pequeño delay para que disfrute los globos y el toast
+                            import time
 
-                    #         time.sleep(2)
-                    #         st.rerun()  # Esto cierra el modal y recarga la página principal
-                    #     else:
-                    #         st.error(f"⚠️ Error de API ({res.status_code}): {res.text}")
+                            time.sleep(2)
+                            st.rerun()  # Esto cierra el modal y recarga la página principal
+                        # else:
+                        #     st.error(f"⚠️ Error de API ({res.status_code}): {res.text}")
 
-                    # except Exception as e:
-                    #     # Usamos tu handler si lo tenés
-                    #     # handle_api_error(e)
-                    #     st.error(
-                    #         f"❌ Error de Conexión: No se pudo contactar con la API de ICARO. {e}"
-                    #     )
+                    except (
+                        ex.AppBaseException
+                    ) as e:  # Captura cualquier error definido por ti
+                        st.error(f"❌ Error: {e}")
+                    except Exception as e:
+                        st.error(f"❌ Ocurrió un error inesperado. {e}")
