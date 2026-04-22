@@ -7,7 +7,13 @@ import streamlit as st
 import src.utils.exceptions as ex
 from src.components import button_cancel, button_submit
 from src.constants import Endpoints
-from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request, put_request
+from src.services import (
+    get_ctas_ctes,
+    get_obras,
+    get_proveedores,
+    post_request,
+    put_request,
+)
 
 
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
@@ -256,7 +262,10 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
             st.rerun()  # Cierra el modal de forma segura
 
         # Botón AGREGAR (Primary, Color Principal)
-        if button_submit("Editar" if es_edicion else "Agregar", type="primary", key=f"{key_prefix}_btn_add"):
+        if button_submit(
+            "Editar" if es_edicion else "Agregar",
+            key=f"{key_prefix}_btn_add",
+        ):
             # 1. Validación de Datos
             errores = []
             if raw_nro_comprobante is None:
@@ -304,7 +313,9 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
                         "nro_certificado": nro_certificado,
                         "desc_obra": desc_obra,
                         "origen": form_data.get("origen", ""),
-                        "updated_at": form_data.get("updated_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
+                        "updated_at": form_data.get(
+                            "updated_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        ),
                     }
                     # print(
                     #     "Payload a enviar a ICARO:", payload
@@ -327,14 +338,15 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
                         # if res.status_code in [200, 201]:
                         if res:
                             # Feedback visual como vimos antes
-                            st.balloons()
+                            st.snow()
                             st.toast(
-                                f"✅ Comprobante N° {nro_comprobante} {"agreagado" if not es_edicion else "editado"} con éxito",
+                                f"✅ Comprobante N° {nro_comprobante} {'agreagado' if not es_edicion else 'editado'} con éxito",
                                 icon="📈",
                             )
 
                             # Guardamos un flag para el rerun final si es necesario
                             st.session_state[f"{key_prefix}_post_success"] = True
+                            st.session_state["carga_dataframes_iteration"] += 1
 
                             # Usamos un pequeño delay para que disfrute los globos y el toast
                             import time

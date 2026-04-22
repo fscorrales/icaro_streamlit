@@ -12,12 +12,11 @@ from src.components import (
     text_input_advance_filter,
 )
 from src.constants import Endpoints, get_ejercicios_list
-from src.services.api_client import (
-    APIConnectionError,
-    APIResponseError,
-    fetch_dataframe,
+from src.services import (
     fetch_excel_stream,
+    get_data_carga,
 )
+from src.utils import APIConnectionError, APIResponseError
 from src.views import (
     dataframe_home_carga,
     dataframe_with_buttons,
@@ -25,30 +24,6 @@ from src.views import (
 )
 
 REPORTE = "home"
-
-
-# --------------------------------------------------
-@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_data_carga(selections: list, filtro_avanzado: str = ""):
-    df_carga = pd.DataFrame()
-    df_ret = pd.DataFrame()
-
-    params_peticion = {
-        "limit": 0,
-    }
-    for nombre_param, valores in selections:
-        if valores:
-            params_peticion[nombre_param] = ",".join(map(str, valores))
-
-    # Hacemos el fetch individual
-    # Tabla Retenciones
-    df_ret = fetch_dataframe(Endpoints.ICARO_RETENCIONES.value, params=params_peticion)
-
-    # Tabla CARGA
-    params_peticion["queryFilter"] = filtro_avanzado
-    df_carga = fetch_dataframe(Endpoints.ICARO_CARGA.value, params=params_peticion)
-
-    return df_carga, df_ret
 
 
 # --------------------------------------------------
@@ -157,7 +132,10 @@ def icaro_carga_template(
 
     # 3. Lógica de Fetch Iterativo (El equivalente al v-for de Vue + API calls)
     try:
-        df_carga, df_ret = get_data_carga(selections, filtro_avanzado)
+        if "carga_dataframes_iteration" not in st.session_state:
+            st.session_state["carga_dataframes_iteration"] = 0
+        trigger = st.session_state["carga_dataframes_iteration"]
+        df_carga, df_ret = get_data_carga(selections, filtro_avanzado, trigger)
 
         if df_carga.empty:
             st.info("No se encontraron resultados.")

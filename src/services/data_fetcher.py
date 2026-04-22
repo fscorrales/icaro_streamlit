@@ -5,6 +5,7 @@ __all__ = [
     "get_obras",
     "get_autocarga_epam",
     "get_autocarga_certificados",
+    "get_data_carga",
 ]
 
 import os
@@ -227,3 +228,29 @@ def get_autocarga_epam(
     #     )
 
     return df
+
+
+# --------------------------------------------------
+@st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
+def get_data_carga(
+    selections: list, filtro_avanzado: str = "", update_trigger: int = 0
+) -> tuple[pd.DataFrame, pd.DataFrame]:
+    df_carga = pd.DataFrame()
+    df_ret = pd.DataFrame()
+
+    params_peticion = {
+        "limit": 0,
+    }
+    for nombre_param, valores in selections:
+        if valores:
+            params_peticion[nombre_param] = ",".join(map(str, valores))
+
+    # Hacemos el fetch individual
+    # Tabla Retenciones
+    df_ret = fetch_dataframe(Endpoints.ICARO_RETENCIONES.value, params=params_peticion)
+
+    # Tabla CARGA
+    params_peticion["queryFilter"] = filtro_avanzado
+    df_carga = fetch_dataframe(Endpoints.ICARO_CARGA.value, params=params_peticion)
+
+    return df_carga, df_ret
