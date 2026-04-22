@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "icaro-streamlit"
-version = "0.20.4"
+version = "0.20.5"
 description = "Sistema de Control de Ejecucion Presupuestaria de Obras del INVICO desarrollado con Streamlit (frontend)"
 # En la versión anterior, los autores van en una lista de strings "Nombre <email>"
 authors = ["Fernando Corrales <fscpython@gmail.com>"]

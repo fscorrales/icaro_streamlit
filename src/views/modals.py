@@ -7,12 +7,13 @@ import streamlit as st
 import src.utils.exceptions as ex
 from src.components import button_cancel, button_submit
 from src.constants import Endpoints
-from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request
+from src.services import get_ctas_ctes, get_obras, get_proveedores, post_request, put_request
 
 
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
 @st.dialog("Agregar Comprobante Gasto", width="medium")
 def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
+    es_edicion = True if datos_edicion else False
     # Si datos_edicion existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_edicion if datos_edicion else {}
 
@@ -255,7 +256,7 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
             st.rerun()  # Cierra el modal de forma segura
 
         # Botón AGREGAR (Primary, Color Principal)
-        if button_submit("Agregar", key=f"{key_prefix}_btn_add"):
+        if button_submit("Editar" if es_edicion else "Agregar", type="primary", key=f"{key_prefix}_btn_add"):
             # 1. Validación de Datos
             errores = []
             if raw_nro_comprobante is None:
@@ -303,24 +304,32 @@ def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
                         "nro_certificado": nro_certificado,
                         "desc_obra": desc_obra,
                         "origen": form_data.get("origen", ""),
-                        "updated_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                        "updated_at": form_data.get("updated_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")),
                     }
-                    print(
-                        "Payload a enviar a ICARO:", payload
-                    )  # Debug: Ver el payload en la consola
+                    # print(
+                    #     "Payload a enviar a ICARO:", payload
+                    # )  # Debug: Ver el payload en la consola
                     # 3. Llamada al POST_REQUEST (Usando tus funciones existentes)
                     try:
-                        res = post_request(
-                            endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
-                            json_body=payload,
-                        )
+                        if es_edicion:
+                            id = str(form_data.get("id"))
+                            # print(f"ID para edición: {id}")  # Debug: Ver el ID en la consola
+                            res = put_request(
+                                endpoint=f"{Endpoints.ICARO_CARGA.value}/update_one/{id}",
+                                json_body=payload,
+                            )
+                        else:
+                            res = post_request(
+                                endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
+                                json_body=payload,
+                            )
 
                         # if res.status_code in [200, 201]:
                         if res:
                             # Feedback visual como vimos antes
                             st.balloons()
                             st.toast(
-                                f"✅ Comprobante N° {nro_comprobante} agregado con éxito a ICARO.",
+                                f"✅ Comprobante N° {nro_comprobante} {"agreagado" if not es_edicion else "editado"} con éxito",
                                 icon="📈",
                             )
 
