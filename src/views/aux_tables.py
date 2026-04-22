@@ -31,7 +31,7 @@ from src.services import (
     post_request,
 )
 from src.utils import APIConnectionError, APIResponseError, read_csv_file
-from src.views.modals import modal_agregar_gasto
+from src.views.modals import modal_comprobante_gasto
 
 
 # --------------------------------------------------
@@ -406,14 +406,14 @@ def dataframe_home_carga(
                 except Exception as e:
                     st.error(f"No se pudo encontrar la página de autocarga: {e}")
             if button_add("Agregar", key=f"btn_add_{key}"):
-                modal_agregar_gasto(
+                modal_comprobante_gasto(
                     key_prefix=f"add_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}"
                 )
             if button_edit("Editar", key=f"btn_edit_{key}"):
                 if len(event.selection.rows) > 0:
                     selected_row_index = event.selection.rows[0]
                     datos_edicion = df_carga.iloc[selected_row_index].to_dict()
-                    modal_agregar_gasto(
+                    modal_comprobante_gasto(
                         key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                         datos_edicion=datos_edicion,
                     )

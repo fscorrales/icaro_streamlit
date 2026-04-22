@@ -1,4 +1,4 @@
-__all__ = ["modal_agregar_gasto"]
+__all__ = ["modal_comprobante_gasto"]
 
 from datetime import date, datetime
 
@@ -17,8 +17,8 @@ from src.services import (
 
 
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
-@st.dialog("Agregar Comprobante Gasto", width="medium")
-def modal_agregar_gasto(key_prefix: str, datos_edicion: dict = None):
+@st.dialog("Agregar / Editar Comprobante Gasto", width="medium")
+def modal_comprobante_gasto(key_prefix: str, datos_edicion: dict = None):
     es_edicion = True if datos_edicion else False
     # Si datos_edicion existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_edicion if datos_edicion else {}
