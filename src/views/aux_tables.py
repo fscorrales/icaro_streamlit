@@ -3,11 +3,9 @@ __all__ = [
     "report_template_without_filters",
     "params_preparation",
     "dataframe_with_buttons",
-    "dataframe_home_carga",
 ]
 
 import time
-from datetime import datetime
 from typing import Any, Optional
 
 import pandas as pd
@@ -18,7 +16,6 @@ from src.components import (
     button_delete,
     button_edit,
     button_export,
-    button_selfadd,
     button_submit,
     button_update,
     dataframe,
@@ -31,7 +28,6 @@ from src.services import (
     post_request,
 )
 from src.utils import APIConnectionError, APIResponseError, read_csv_file
-from src.views.modals import modal_comprobante_gasto
 
 
 # --------------------------------------------------
@@ -350,74 +346,3 @@ def dataframe_with_buttons(
                 pass
             if button_delete("Borrar", key=f"btn_delete_{key}"):
                 pass
-
-
-# --------------------------------------------------
-def dataframe_home_carga(
-    df_carga: pd.DataFrame, key: str = "df_home_carga", height: int = 200, **kwargs
-):
-    with st.container(
-        horizontal=False,
-        border=True,
-        width="stretch",
-    ):
-        event = dataframe(
-            df_carga,
-            key=f"df_carga_{key}",
-            height=height,
-            on_select="rerun",
-            selection_mode="single-row",
-            column_order=[
-                "mes",
-                "fecha",
-                "id_carga",
-                # "nro_comprobante",
-                "tipo",
-                "fuente",
-                "cta_cte",
-                "importe",
-                "desc_obra",
-                # "fondo_reparo",
-                "avance",
-                "nro_certificado",
-                "cuit",
-                "origen",
-            ],
-            column_config={
-                "fecha": st.column_config.DateColumn(
-                    "fecha",
-                    format="DD/MM/YYYY",  # O el formato que prefieras
-                ),
-                "nro_certificado": st.column_config.TextColumn("cert"),
-            },
-            **kwargs,
-        )
-        with st.container(
-            horizontal=True,
-            border=False,
-            width="stretch",
-            horizontal_alignment="center",
-            gap="medium",
-        ):
-            if button_selfadd("Autocarga", key=f"btn_selfadd_{key}", type="primary"):
-                # Suponiendo que tu archivo se llama pages/autocarga.py o similar
-                try:
-                    st.switch_page("src/pages/autocarga.py")  # <--- Esta es la clave
-                except Exception as e:
-                    st.error(f"No se pudo encontrar la página de autocarga: {e}")
-            if button_add("Agregar", key=f"btn_add_{key}"):
-                modal_comprobante_gasto(
-                    key_prefix=f"add_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-                )
-            if button_edit("Editar", key=f"btn_edit_{key}"):
-                if len(event.selection.rows) > 0:
-                    selected_row_index = event.selection.rows[0]
-                    datos_edicion = df_carga.iloc[selected_row_index].to_dict()
-                    modal_comprobante_gasto(
-                        key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                        datos_edicion=datos_edicion,
-                    )
-            if button_delete("Borrar", key=f"btn_delete_{key}"):
-                pass
-
-    return event

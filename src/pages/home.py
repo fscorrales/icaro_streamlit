@@ -3,11 +3,18 @@ Author: Fernando Corrales <fscpython@gmail.com>
 Purpose: ICARO's Home Page
 """
 
+from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
 from src.components import (
+    button_add,
+    button_delete,
+    button_edit,
     button_export,
+    button_selfadd,
+    dataframe,
     multiselect_filter,
     text_input_advance_filter,
 )
@@ -18,12 +25,91 @@ from src.services import (
 )
 from src.utils import APIConnectionError, APIResponseError
 from src.views import (
-    dataframe_home_carga,
     dataframe_with_buttons,
+    modal_comprobante_gasto,
+    modal_delete_comprobante,
     params_preparation,
 )
 
 REPORTE = "home"
+
+
+# --------------------------------------------------
+def dataframe_home_carga(
+    df_carga: pd.DataFrame, key: str = "df_home_carga", height: int = 200, **kwargs
+):
+    with st.container(
+        horizontal=False,
+        border=True,
+        width="stretch",
+    ):
+        event = dataframe(
+            df_carga,
+            key=f"df_carga_{key}",
+            height=height,
+            on_select="rerun",
+            selection_mode="single-row",
+            column_order=[
+                "mes",
+                "fecha",
+                "id_carga",
+                # "nro_comprobante",
+                "tipo",
+                "fuente",
+                "cta_cte",
+                "importe",
+                "desc_obra",
+                # "fondo_reparo",
+                "avance",
+                "nro_certificado",
+                "cuit",
+                "origen",
+            ],
+            column_config={
+                "fecha": st.column_config.DateColumn(
+                    "fecha",
+                    format="DD/MM/YYYY",  # O el formato que prefieras
+                ),
+                "nro_certificado": st.column_config.TextColumn("cert"),
+            },
+            **kwargs,
+        )
+        with st.container(
+            horizontal=True,
+            border=False,
+            width="stretch",
+            horizontal_alignment="center",
+            gap="medium",
+        ):
+            if button_selfadd("Autocarga", key=f"btn_selfadd_{key}", type="primary"):
+                # Suponiendo que tu archivo se llama pages/autocarga.py o similar
+                try:
+                    st.switch_page("src/pages/autocarga.py")  # <--- Esta es la clave
+                except Exception as e:
+                    st.error(f"No se pudo encontrar la página de autocarga: {e}")
+            if button_add("Agregar", key=f"btn_add_{key}"):
+                modal_comprobante_gasto(
+                    key_prefix=f"add_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+                )
+            if button_edit("Editar", key=f"btn_edit_{key}"):
+                if len(event.selection.rows) > 0:
+                    selected_row_index = event.selection.rows[0]
+                    datos_edicion = df_carga.iloc[selected_row_index].to_dict()
+                    modal_comprobante_gasto(
+                        key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                        datos_edicion=datos_edicion,
+                    )
+            if button_delete("Borrar", key=f"btn_delete_{key}"):
+                if len(event.selection.rows) > 0:
+                    selected_row_index = event.selection.rows[0]
+                    form_data = df_carga.iloc[selected_row_index].to_dict()
+                    # Disparamos el modal de confirmación
+                    modal_delete_comprobante(
+                        id_mongo=str(form_data.get("id")),
+                        id_carga_contable=form_data.get("id_carga"),
+                    )
+
+    return event
 
 
 # --------------------------------------------------

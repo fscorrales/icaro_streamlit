@@ -1,4 +1,4 @@
-__all__ = ["modal_comprobante_gasto"]
+__all__ = ["modal_comprobante_gasto", "modal_delete_comprobante"]
 
 from datetime import date, datetime
 
@@ -8,6 +8,7 @@ import src.utils.exceptions as ex
 from src.components import button_cancel, button_submit
 from src.constants import Endpoints
 from src.services import (
+    delete_request,
     get_ctas_ctes,
     get_obras,
     get_proveedores,
@@ -362,3 +363,50 @@ def modal_comprobante_gasto(key_prefix: str, datos_edicion: dict = None):
                         st.error(f"❌ Error: {e}")
                     except Exception as e:
                         st.error(f"❌ Ocurrió un error inesperado. {e}")
+
+
+# --- MODAL: ELIMINAR COMPROBANTE DE GASTO ---
+@st.dialog("Confirmar Eliminación PERMANENTE", width="small")
+def modal_delete_comprobante(
+    id_mongo: str, id_carga_contable: str, key_prefix: str = ""
+):
+    st.warning(
+        f"⚠️ ¿Estás seguro de que deseás eliminar el comprobante **{id_carga_contable}**?"
+    )
+    st.write(
+        "Esta acción es permanente y también eliminará todas las retenciones asociadas."
+    )
+
+    st.markdown("---")
+    with st.container(
+        horizontal=True, border=False, horizontal_alignment="center", gap="large"
+    ):
+        if button_cancel("Cancelar", key=f"{key_prefix}_btn_cancel", type="secondary"):
+            st.rerun()
+
+        if button_submit("Si, Eliminar", key=f"{key_prefix}_btn_eliminar"):
+            with st.spinner("Eliminando registros..."):
+                try:
+                    print(id_mongo)
+                    # 1. Borramos Retenciones (Cascada)
+                    # Usamos el id_carga contable (ej: 00999/26C) como string
+                    # res_ret = delete_request(
+                    #     f"{Endpoints.ICARO_RETENCIONES.value}/delete_many/{id_carga_contable}"
+                    # )
+
+                    # 2. Borramos el Comprobante de Carga
+                    # Usamos el ID técnico de MongoDB
+                    res_carga = delete_request(
+                        f"{Endpoints.ICARO_CARGA.value}/delete_one/{id_mongo}"
+                    )
+
+                    if res_carga:
+                        st.success("Registros eliminados correctamente.")
+                        st.session_state["carga_dataframes_iteration"] += 1
+                        import time
+
+                        time.sleep(2)
+                        st.rerun()
+
+                except Exception as e:
+                    st.error(f"Error al eliminar: {e}")

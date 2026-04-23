@@ -12,6 +12,7 @@ __all__ = [
     "post_request",
     "put_request",
     "patch_request",
+    "delete_request",
     "fetch_dataframe",
 ]
 
@@ -213,6 +214,7 @@ def post_request(
     except httpx.RequestError as e:
         raise APIConnectionError(f"Error de conexión (POST): {e}") from e
 
+
 # --------------------------------------------------
 def put_request(
     endpoint: str,
@@ -220,7 +222,7 @@ def put_request(
     token: Optional[str] = None,
 ) -> dict[str, Any]:
     """
-    Realiza un POST genérico a la API. Útil para actualizar base de datos
+    Realiza un PUT genérico a la API. Útil para actualizar base de datos
     tras ejecuciones de Playwright/Pywinauto.
     """
     headers = _get_headers(token=token)
@@ -248,6 +250,30 @@ def put_request(
         return _handle_response(response)
     except httpx.RequestError as e:
         raise APIConnectionError(f"Error de conexión (PUT): {e}") from e
+
+
+# --------------------------------------------------
+def delete_request(
+    endpoint: str,
+    token: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Realiza un DELETE genérico a la API. Útil para actualizar base de datos
+    tras ejecuciones de Playwright/Pywinauto.
+    """
+    headers = _get_headers(token=token)
+
+    try:
+        response = httpx.delete(
+            f"{BASE_URL}{endpoint}",
+            headers=headers,
+            timeout=settings.DEFAULT_TIMEOUT,
+            follow_redirects=True,
+        )
+        return _handle_response(response)
+    except httpx.RequestError as e:
+        raise APIConnectionError(f"Error de conexión (DELETE): {e}") from e
+
 
 # --------------------------------------------------
 def _handle_response(response: httpx.Response) -> Any:
