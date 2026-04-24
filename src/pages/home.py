@@ -97,7 +97,8 @@ def dataframe_home_carga(
                     datos_edicion = df_carga.iloc[selected_row_index].to_dict()
                     modal_comprobante_gasto(
                         key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                        datos_edicion=datos_edicion,
+                        datos_carga=datos_edicion,
+                        es_edicion=True,
                     )
             if button_delete("Borrar", key=f"btn_delete_{key}"):
                 if len(event.selection.rows) > 0:

@@ -328,11 +328,13 @@ def dataframe_with_buttons(
     key: str = "df_with_btns",
     height: int = 150,
     column_order: list = [],
+    add_func=None,
     **kwargs,
 ):
 
     with st.container(horizontal=False, border=True, width="stretch"):
-        dataframe(df, key=f"{key}", height=height, column_order=column_order, **kwargs)
+        dataframe(df, key=f"{key}", height=height, column_order=column_order, on_select="rerun",
+            selection_mode="single-row")
         with st.container(
             horizontal=True,
             border=False,
@@ -341,7 +343,8 @@ def dataframe_with_buttons(
             gap="medium",
         ):
             if button_add("Agregar", key=f"btn_add_{key}", type="primary"):
-                pass
+                if add_func:
+                    add_func()
             if button_edit("Editar", key=f"btn_edit_{key}"):
                 pass
             if button_delete("Borrar", key=f"btn_delete_{key}"):

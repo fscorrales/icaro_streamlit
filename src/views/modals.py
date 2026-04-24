@@ -15,14 +15,16 @@ from src.services import (
     post_request,
     put_request,
 )
+from src.utils.transform_data import build_retenciones_payload
 
 
 # --- MODAL: AGREGAR COMPROBANTE DE GASTO ---
 @st.dialog("Agregar / Editar Comprobante Gasto", width="medium")
-def modal_comprobante_gasto(key_prefix: str, datos_edicion: dict = None):
-    es_edicion = True if datos_edicion else False
-    # Si datos_edicion existe, lo usamos. Si no, inicializamos vacío.
-    form_data = datos_edicion if datos_edicion else {}
+def modal_comprobante_gasto(
+    key_prefix: str, datos_carga: dict = None, es_edicion: bool = False
+):
+    # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
+    form_data = datos_carga if datos_carga else {}
 
     # Traemos los DATOS
     df_obras = get_obras()
@@ -97,7 +99,7 @@ def modal_comprobante_gasto(key_prefix: str, datos_edicion: dict = None):
                     else:
                         st.session_state[f"{key_prefix}_fuente_index"] = None
 
-            except Exception as e:
+            except Exception:
                 st.session_state[f"{key_prefix}_fuente_index"] = None
 
     # FILA 1: 4 Columnas (Nro, Fecha, Nro ICARO, Tipo)
@@ -344,6 +346,24 @@ def modal_comprobante_gasto(key_prefix: str, datos_edicion: dict = None):
                                 f"✅ Comprobante N° {nro_comprobante} {'agreagado' if not es_edicion else 'editado'} con éxito",
                                 icon="📈",
                             )
+                            # Procedemos a cargar las retenciones si vengo de AUTOCARGA
+                            if not es_edicion and form_data.get("origen") != "":
+                                payload = build_retenciones_payload(datos_carga)
+                                res_ret = post_request(
+                                    endpoint=Endpoints.ICARO_RETENCIONES.value
+                                    + f"/add_many/{nro_comprobante}{tipo[:1]}",
+                                    json_body=payload,
+                                )
+                                if res_ret:
+                                    st.toast(
+                                        "✅ Retenciones asociadas agregadas con éxito",
+                                        icon="🧾",
+                                    )
+                                else:
+                                    st.toast(
+                                        "⚠️ Error al agregar retenciones asociadas. Por favor, revisa el comprobante.",
+                                        icon="⚠️",
+                                    )
 
                             # Guardamos un flag para el rerun final si es necesario
                             st.session_state[f"{key_prefix}_post_success"] = True
