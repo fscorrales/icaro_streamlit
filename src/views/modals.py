@@ -12,6 +12,7 @@ from src.services import (
     get_ctas_ctes,
     get_obras,
     get_proveedores,
+    patch_request,
     post_request,
     put_request,
 )
@@ -296,11 +297,12 @@ def modal_comprobante_gasto(
             else:
                 with st.spinner("Procesando y Guardando..."):
                     # 2. Preparación del payload para el POST
+                    id_carga = f"{nro_comprobante}{tipo[:1]}"
                     payload = {
                         "ejercicio": int(fecha.year),
                         "mes": f"{str(fecha.month).zfill(2)}/{str(fecha.year)}",
                         "fecha": fecha.strftime("%Y-%m-%d"),  # Formato ISO para MongoDB
-                        "id_carga": f"{nro_comprobante}{tipo[:1]}",
+                        "id_carga": id_carga,
                         "nro_comprobante": nro_comprobante,
                         "tipo": tipo,
                         "fuente": fuente,
@@ -346,12 +348,13 @@ def modal_comprobante_gasto(
                                 f"✅ Comprobante N° {nro_comprobante} {'agreagado' if not es_edicion else 'editado'} con éxito",
                                 icon="📈",
                             )
-                            # Procedemos a cargar las retenciones si vengo de AUTOCARGA
+                            # Procedemos a cargar las retenciones y la información de autocarga
+                            # si vengo de AUTOCARGA
                             if not es_edicion and form_data.get("origen") != "":
                                 payload = build_retenciones_payload(datos_carga)
                                 res_ret = post_request(
                                     endpoint=Endpoints.ICARO_RETENCIONES.value
-                                    + f"/add_many/{nro_comprobante}{tipo[:1]}",
+                                    + f"/add_many/{id_carga}",
                                     json_body=payload,
                                 )
                                 if res_ret:
@@ -362,6 +365,23 @@ def modal_comprobante_gasto(
                                 else:
                                     st.toast(
                                         "⚠️ Error al agregar retenciones asociadas. Por favor, revisa el comprobante.",
+                                        icon="⚠️",
+                                    )
+
+                                payload = {"id_carga": id_carga}
+                                res_aut = patch_request(
+                                    endpoint=Endpoints.ICARO_INFORME_CONTABLE.value
+                                    + f"/update_id_carga/{str(form_data.get('id'))}",
+                                    json_body=payload,
+                                )
+                                if res_aut:
+                                    st.toast(
+                                        "✅ Información de carga actualizada con éxito",
+                                        icon="✅",
+                                    )
+                                else:
+                                    st.toast(
+                                        "⚠️ Error al actualizar la información de carga. Por favor, revisa el comprobante.",
                                         icon="⚠️",
                                     )
 
