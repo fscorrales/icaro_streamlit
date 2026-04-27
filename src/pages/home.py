@@ -84,7 +84,9 @@ def dataframe_home_carga(
             if button_selfadd("Autocarga", key=f"btn_selfadd_{key}", type="primary"):
                 # Suponiendo que tu archivo se llama pages/autocarga.py o similar
                 try:
-                    st.switch_page("src/pages/autocarga.py")  # <--- Esta es la clave
+                    st.switch_page(
+                        "src/pages/autocarga/autocarga.py"
+                    )  # <--- Esta es la clave
                 except Exception as e:
                     st.error(f"No se pudo encontrar la página de autocarga: {e}")
             if button_add("Agregar", key=f"btn_add_{key}"):
