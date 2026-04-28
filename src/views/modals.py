@@ -24,6 +24,7 @@ from src.utils.transform_data import build_retenciones_payload
 def modal_comprobante_gasto(
     key_prefix: str, datos_carga: dict = None, es_edicion: bool = False
 ):
+    id_carga = ""
     # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_carga if datos_carga else {}
 
@@ -369,16 +370,24 @@ def modal_comprobante_gasto(
                                     )
 
                                 payload = {"id_carga": id_carga}
-                                res_aut = patch_request(
-                                    endpoint=Endpoints.ICARO_INFORME_CONTABLE.value
-                                    + f"/update_id_carga/{str(form_data.get('id'))}",
-                                    json_body=payload,
-                                )
+                                origen = str(form_data.get("origen")).lower()
+                                if origen == "obras":
+                                    res_aut = patch_request(
+                                        endpoint=Endpoints.ICARO_INFORME_CONTABLE.value
+                                        + f"/update_id_carga/{str(form_data.get('id'))}",
+                                        json_body=payload,
+                                    )
+                                    print(
+                                        f"Respuesta al actualizar id_carga en informe contable: {res_aut}"
+                                    )
                                 if res_aut:
                                     st.toast(
                                         "✅ Información de carga actualizada con éxito",
                                         icon="✅",
                                     )
+                                    st.session_state[
+                                        f"autocarga_{origen}_uploader_iteration"
+                                    ] += 1
                                 else:
                                     st.toast(
                                         "⚠️ Error al actualizar la información de carga. Por favor, revisa el comprobante.",
@@ -427,26 +436,24 @@ def modal_delete_comprobante(
         if button_submit("Si, Eliminar", key=f"{key_prefix}_btn_eliminar"):
             with st.spinner("Eliminando registros..."):
                 try:
-                    print(id_mongo)
-                    # 1. Borramos Retenciones (Cascada)
-                    # Usamos el id_carga contable (ej: 00999/26C) como string
-                    # res_ret = delete_request(
-                    #     f"{Endpoints.ICARO_RETENCIONES.value}/delete_many/{id_carga_contable}"
-                    # )
-
-                    # 2. Borramos el Comprobante de Carga
-                    # Usamos el ID técnico de MongoDB
                     res_carga = delete_request(
                         f"{Endpoints.ICARO_CARGA.value}/delete_one/{id_mongo}"
                     )
+                    res_retenciones = delete_request(
+                        f"{Endpoints.ICARO_RETENCIONES.value}/delete_many/{id_carga_contable}"
+                    )
 
-                    if res_carga:
+                    if res_carga and res_retenciones:
                         st.success("Registros eliminados correctamente.")
                         st.session_state["carga_dataframes_iteration"] += 1
                         import time
+                    else:
+                        st.error(
+                            "Error al eliminar los registros. Por favor, intenta nuevamente."
+                        )
 
-                        time.sleep(2)
-                        st.rerun()
+                    time.sleep(2)
+                    st.rerun()
 
                 except Exception as e:
                     st.error(f"Error al eliminar: {e}")

@@ -17,7 +17,6 @@ from src.views import (
     report_template_without_filters,
 )
 
-REPORTE_CERTIFICADOS = "certificados"
 REPORTE_EPAM = "epam"
 
 

@@ -7,9 +7,9 @@ from src.pages.autocarga import epam, obras
 
 def main() -> None:
 
-    tab_certificados, tab_epam = st.tabs(["Certificados", "EPAM"])
+    tab_obras, tab_epam = st.tabs(["Obras", "EPAM"])
 
-    with tab_certificados:
+    with tab_obras:
         obras.render()
 
     with tab_epam:

@@ -22,17 +22,16 @@ from src.views import (
     report_template_without_filters,
 )
 
-REPORTE_CERTIFICADOS = "certificados"
-REPORTE_EPAM = "epam"
+REPORTE_OBRAS = "obras"
 
 
 # --------------------------------------------------
 def render() -> None:
 
     report_template_without_filters(
-        key=f"autocarga_{REPORTE_CERTIFICADOS}",
-        title=REPORTE_CERTIFICADOS.capitalize(),
-        description="Certificados del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
+        key=f"autocarga_{REPORTE_OBRAS}",
+        title=REPORTE_OBRAS.capitalize(),
+        description="Obras del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
         endpoint=Endpoints.ICARO_INFORME_CONTABLE.value,
         has_export=True,
         has_upload=True,
@@ -41,11 +40,9 @@ def render() -> None:
 
     # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
     filtro_actual = st.session_state.get(
-        f"autocarga_{REPORTE_CERTIFICADOS}_advanced_filter", ""
+        f"autocarga_{REPORTE_OBRAS}_advanced_filter", ""
     )
-    trigger = st.session_state.get(
-        f"autocarga_{REPORTE_CERTIFICADOS}_uploader_iteration", 0
-    )
+    trigger = st.session_state.get(f"autocarga_{REPORTE_OBRAS}_uploader_iteration", 0)
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     df_certificados = pd.DataFrame()
@@ -73,7 +70,7 @@ def render() -> None:
         with st.container(horizontal=False, border=True, width="stretch"):
             event = dataframe(
                 df_certificados,
-                key=f"{REPORTE_CERTIFICADOS}_df_certificados",
+                key=f"{REPORTE_OBRAS}_df_certificados",
                 height=300,
                 column_order=orden_dinamico,
                 on_select="rerun",
@@ -87,7 +84,7 @@ def render() -> None:
                 gap="medium",
             ):
                 if button_add(
-                    "Agregar", key=f"btn_add_{REPORTE_CERTIFICADOS}", type="primary"
+                    "Agregar", key=f"btn_add_{REPORTE_OBRAS}", type="primary"
                 ):
                     if len(event.selection.rows) > 0:
                         selected_row_index = event.selection.rows[0]
@@ -126,9 +123,10 @@ def render() -> None:
                             key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                             datos_carga=datos_obras,
                         )
-                if button_edit("Editar", key=f"btn_edit_{REPORTE_CERTIFICADOS}"):
+
+                if button_edit("Editar", key=f"btn_edit_{REPORTE_OBRAS}"):
                     pass
-                if button_delete("Borrar", key=f"btn_delete_{REPORTE_CERTIFICADOS}"):
+                if button_delete("Borrar", key=f"btn_delete_{REPORTE_OBRAS}"):
                     pass
 
 
