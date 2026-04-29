@@ -77,57 +77,87 @@ def render() -> None:
                 selection_mode="single-row",
             )
             with st.container(
-                horizontal=True,
+                horizontal=False,
                 border=False,
                 width="stretch",
                 horizontal_alignment="center",
-                gap="medium",
             ):
-                if button_add(
-                    "Agregar", key=f"btn_add_{REPORTE_OBRAS}", type="primary"
+                with st.container(
+                    horizontal=True,
+                    border=False,
+                    width="stretch",
+                    horizontal_alignment="center",
+                    gap="medium",
                 ):
-                    if len(event.selection.rows) > 0:
-                        selected_row_index = event.selection.rows[0]
-                        datos_obras = df_certificados.iloc[selected_row_index].to_dict()
+                    btn_add = button_add(
+                        "Agregar", key=f"btn_add_{REPORTE_OBRAS}", type="primary"
+                    )
+                    btn_edit = button_edit("Editar", key=f"btn_edit_{REPORTE_OBRAS}")
+                    btn_del = button_delete("Borrar", key=f"btn_delete_{REPORTE_OBRAS}")
 
-                        # Traemos el cuit desde el DF de proveedores para completar los datos que le pasamos al modal
-                        df_proveedores = get_proveedores()
-                        coincidencias = df_proveedores[
-                            df_proveedores["desc_proveedor"]
-                            == datos_obras["beneficiario"]
-                        ]
-                        if not coincidencias.empty:
-                            fila = coincidencias[["cuit"]].iloc[0]
-                            datos_obras.update(fila.to_dict())
-                        else:
-                            print("No se encontró el proveedor.")
+                # --- EL PLACEHOLDER VA AQUÍ (DEBAJO DE LOS BOTONES) ---
+                error_placeholder = st.empty()
 
-                        # Traemos la fuente y cta_cte desde el DF de obras para completar los datos que le pasamos al modal
-                        df_obras = get_obras()
-                        coincidencias = df_obras[
-                            df_obras["desc_obra"] == datos_obras["desc_obra"]
-                        ]
+        if btn_add:
+            if len(event.selection.rows) > 0:
+                selected_row_index = event.selection.rows[0]
+                datos_obras = df_certificados.iloc[selected_row_index].to_dict()
 
-                        if not coincidencias.empty:
-                            fila = coincidencias[
-                                ["actividad", "partida", "fuente", "cta_cte"]
-                            ].iloc[0]
-                            datos_obras.update(fila.to_dict())
-                        else:
-                            print("No se encontró la obra.")
+                # Traemos el cuit desde el DF de proveedores para completar los datos que le pasamos al modal
+                df_proveedores = get_proveedores()
+                coincidencias = df_proveedores[
+                    df_proveedores["desc_proveedor"] == datos_obras["beneficiario"]
+                ]
+                if not coincidencias.empty:
+                    fila = coincidencias[["cuit"]].iloc[0]
+                    datos_obras.update(fila.to_dict())
+                else:
+                    # 1. Alerta rápida en la esquina
+                    st.toast("⚠️ Proveedor no encontrado", icon="👤")
 
-                        datos_obras["importe"] = float(datos_obras["importe_bruto"])
-                        datos_obras["origen"] = "Obras"
-                        # print(datos_obras)
-                        modal_comprobante_gasto(
-                            key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                            datos_carga=datos_obras,
+                    # 2. Mensaje con acción en el cuerpo de la página
+                    with error_placeholder.container(
+                        horizontal=False,
+                        width="stretch",
+                        horizontal_alignment="center",
+                    ):
+                        st.error(
+                            f"El beneficiario '{datos_obras['beneficiario']}' no existe en la base de datos."
                         )
+                        if st.page_link(
+                            "src/pages/proveedores.py",
+                            label="Ir a Actualizar Proveedores",
+                            icon="⚙️",
+                        ):
+                            pass
+                        st.stop()  # Detenemos la ejecución para que no abra el modal vacío
 
-                if button_edit("Editar", key=f"btn_edit_{REPORTE_OBRAS}"):
-                    pass
-                if button_delete("Borrar", key=f"btn_delete_{REPORTE_OBRAS}"):
-                    pass
+                # Traemos la fuente y cta_cte desde el DF de obras para completar los datos que le pasamos al modal
+                df_obras = get_obras()
+                coincidencias = df_obras[
+                    df_obras["desc_obra"] == datos_obras["desc_obra"]
+                ]
+
+                if not coincidencias.empty:
+                    fila = coincidencias[
+                        ["actividad", "partida", "fuente", "cta_cte"]
+                    ].iloc[0]
+                    datos_obras.update(fila.to_dict())
+                else:
+                    print("No se encontró la obra.")
+
+                datos_obras["importe"] = float(datos_obras["importe_bruto"])
+                datos_obras["origen"] = "Obras"
+                # print(datos_obras)
+                modal_comprobante_gasto(
+                    key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                    datos_carga=datos_obras,
+                )
+
+        if btn_edit:
+            pass
+        if btn_del:
+            pass
 
 
 if __name__ == "__main__":
