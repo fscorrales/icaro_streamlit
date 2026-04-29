@@ -16,7 +16,7 @@ from src.services import (
     get_proveedores,
     process_certificados_obras,
 )
-from src.utils import APIConnectionError, APIResponseError
+from src.utils import APIConnectionError, APIResponseError, build_retenciones_payload
 from src.views import (
     modal_comprobante_gasto,
     report_template_without_filters,
@@ -97,6 +97,32 @@ def render() -> None:
 
                 # --- EL PLACEHOLDER VA AQUÍ (DEBAJO DE LOS BOTONES) ---
                 error_placeholder = st.empty()
+
+        if event is not None:
+            if len(event.selection.rows) > 0:
+                selected_row_index = event.selection.rows[0]
+                datos_obras = df_certificados.iloc[selected_row_index].to_dict()
+                payload_retenciones = build_retenciones_payload(datos_obras)
+
+                # Extraemos los datos crudos
+                lista_ret = payload_retenciones.get("retenciones", [])
+
+                # Ordenamos la lista de retenciones por el código (convertido a entero)
+                lista_ordenada = sorted(lista_ret, key=lambda x: int(x["codigo"]))
+
+                # Construimos el diccionario manteniendo el orden de inserción (Python 3.7+)
+                datos_fila = {
+                    item["codigo"]: item["importe"] for item in lista_ordenada
+                }
+                datos_fila["TOTAL"] = sum(datos_fila.values())
+
+                st.markdown("### Resumen de Retenciones Calculadas")
+                with st.container(horizontal=False, border=True, width="stretch"):
+                    dataframe(
+                        pd.DataFrame([datos_fila]),
+                        key=f"retenciones_{REPORTE_OBRAS}",
+                        height=80,  # Altura pequeña ya que es solo una fila
+                    )
 
         if btn_add:
             if len(event.selection.rows) > 0:
