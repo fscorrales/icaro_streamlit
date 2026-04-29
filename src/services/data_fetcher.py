@@ -195,7 +195,7 @@ def get_autocarga_certificados(filtro_avanzado: str = "", update_trigger: int = 
     # Tabla Certificados
     df = fetch_dataframe(Endpoints.ICARO_INFORME_CONTABLE.value, params=params_peticion)
     if not df.empty:
-        # df = df.loc[df["id_carga"] == ""]
+        df = df.loc[df["id_carga"] == ""]
         df = df.sort_values(
             ["beneficiario", "desc_obra", "nro_certificado"],
             ascending=True,

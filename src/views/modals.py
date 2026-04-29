@@ -377,9 +377,9 @@ def modal_comprobante_gasto(
                                         + f"/update_id_carga/{str(form_data.get('id'))}",
                                         json_body=payload,
                                     )
-                                    print(
-                                        f"Respuesta al actualizar id_carga en informe contable: {res_aut}"
-                                    )
+                                    # print(
+                                    #     f"Respuesta al actualizar id_carga en informe contable: {res_aut}"
+                                    # )
                                 if res_aut:
                                     st.toast(
                                         "✅ Información de carga actualizada con éxito",
@@ -417,7 +417,7 @@ def modal_comprobante_gasto(
 # --- MODAL: ELIMINAR COMPROBANTE DE GASTO ---
 @st.dialog("Confirmar Eliminación PERMANENTE", width="small")
 def modal_delete_comprobante(
-    id_mongo: str, id_carga_contable: str, key_prefix: str = ""
+    id_mongo: str, id_carga_contable: str, origen: str = "", key_prefix: str = ""
 ):
     st.warning(
         f"⚠️ ¿Estás seguro de que deseás eliminar el comprobante **{id_carga_contable}**?"
@@ -436,21 +436,44 @@ def modal_delete_comprobante(
         if button_submit("Si, Eliminar", key=f"{key_prefix}_btn_eliminar"):
             with st.spinner("Eliminando registros..."):
                 try:
+                    origen = origen.lower()
+                    # 1. Borrar Carga
                     res_carga = delete_request(
                         f"{Endpoints.ICARO_CARGA.value}/delete_one/{id_mongo}"
                     )
+                    # 2. Borrar Retenciones
                     res_retenciones = delete_request(
                         f"{Endpoints.ICARO_RETENCIONES.value}/delete_many/{id_carga_contable}"
                     )
+                    # 3. Desvincular Informe Contable (Limpiar el campo id_carga)
+                    if origen.lower() == "obras":
+                        res_desvinculo = patch_request(
+                            f"{Endpoints.ICARO_INFORME_CONTABLE.value}/unlink_by_carga/{id_carga_contable}"
+                        )
 
                     if res_carga and res_retenciones:
-                        st.success("Registros eliminados correctamente.")
+                        st.success(
+                            "Comprobante, retenciones y vínculo eliminados correctamente."
+                        )
                         st.session_state["carga_dataframes_iteration"] += 1
-                        import time
+                        if origen != "":
+                            if (
+                                f"autocarga_{origen}_uploader_iteration"
+                                not in st.session_state
+                            ):
+                                st.session_state[
+                                    f"autocarga_{origen}_uploader_iteration"
+                                ] = 0
+                            else:
+                                st.session_state[
+                                    f"autocarga_{origen}_uploader_iteration"
+                                ] += 1
                     else:
                         st.error(
                             "Error al eliminar los registros. Por favor, intenta nuevamente."
                         )
+
+                    import time
 
                     time.sleep(2)
                     st.rerun()

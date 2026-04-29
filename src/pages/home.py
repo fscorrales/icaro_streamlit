@@ -110,6 +110,8 @@ def dataframe_home_carga(
                     modal_delete_comprobante(
                         id_mongo=str(form_data.get("id")),
                         id_carga_contable=form_data.get("id_carga"),
+                        origen=form_data.get("origen", ""),
+                        key_prefix=f"delete_carga_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                     )
 
     return event

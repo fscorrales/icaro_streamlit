@@ -118,7 +118,7 @@ def render() -> None:
 
                         datos_obras["importe"] = float(datos_obras["importe_bruto"])
                         datos_obras["origen"] = "Obras"
-                        print(datos_obras)
+                        # print(datos_obras)
                         modal_comprobante_gasto(
                             key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                             datos_carga=datos_obras,
