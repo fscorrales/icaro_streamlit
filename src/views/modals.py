@@ -1,4 +1,4 @@
-__all__ = ["modal_comprobante_gasto", "modal_delete_comprobante"]
+__all__ = ["modal_comprobante_gasto", "modal_delete_comprobante", "modal_obras"]
 
 from datetime import date, datetime
 
@@ -10,6 +10,7 @@ from src.constants import Endpoints
 from src.services import (
     delete_request,
     get_ctas_ctes,
+    get_estructuras,
     get_obras,
     get_proveedores,
     patch_request,
@@ -480,3 +481,346 @@ def modal_delete_comprobante(
 
                 except Exception as e:
                     st.error(f"Error al eliminar: {e}")
+
+
+# --- MODAL: AGREGAR OBRA ---
+@st.dialog("Agregar / Editar Obra", width="medium")
+def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = False):
+    id_carga = ""
+    # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
+    form_data = datos_carga if datos_carga else {}
+
+    # Traemos los DATOS
+    df_ctas_ctes = get_ctas_ctes()
+    df_prov = get_proveedores()
+    df_actividades = get_estructuras()
+    df_actividades = df_actividades[df_actividades["estructura"].str.len() == 11]
+    lista_localidades = (
+        get_obras()["localidad"].str.title().sort_values().unique().tolist()
+    )
+    lista_info_adicional = get_obras()["info_adicional"].sort_values().unique().tolist()
+
+    # Inicializamos el índice de partida en el state si no existe
+    if f"{key_prefix}_partida_index" not in st.session_state:
+        # Si estamos editando, buscamos el índice de la partida que ya traía el registro
+        partida_previa = form_data.get("partida")
+        lista_partidas = ["421", "422"]
+
+        if partida_previa in lista_partidas:
+            st.session_state[f"{key_prefix}_partida_index"] = lista_partidas.index(
+                partida_previa
+            )
+        else:
+            st.session_state[f"{key_prefix}_partida_index"] = None
+
+    # Inicializamos el índice de cta_cte en el state si no existe
+    if f"{key_prefix}_cuenta_index" not in st.session_state:
+        # Si estamos editando, buscamos el índice de la cuenta que ya traía el registro
+        cta_previa = form_data.get("cta_cte")
+        lista_cuentas = df_ctas_ctes.icaro_cta_cte.to_list()
+
+        if cta_previa in lista_cuentas:
+            st.session_state[f"{key_prefix}_cuenta_index"] = lista_cuentas.index(
+                cta_previa
+            )
+        else:
+            st.session_state[f"{key_prefix}_cuenta_index"] = None
+
+    # Inicializamos el índice de fuente en el state si no existe
+    if f"{key_prefix}_fuente_index" not in st.session_state:
+        # Si estamos editando, buscamos el índice de la cuenta que ya traía el registro
+        fuente_previa = form_data.get("fuente")
+        lista_fuentes = ["10", "11", "13"]
+
+        if fuente_previa in lista_fuentes:
+            st.session_state[f"{key_prefix}_fuente_index"] = lista_fuentes.index(
+                fuente_previa
+            )
+        else:
+            st.session_state[f"{key_prefix}_fuente_index"] = None
+
+    # Inicializamos el índice de localidades en el state si no existe
+    if f"{key_prefix}_localidad_index" not in st.session_state:
+        # Si estamos editando, buscamos el índice de la localidad que ya traía el registro
+        localidad_previa = form_data.get("localidad")
+
+        if localidad_previa in lista_localidades:
+            st.session_state[f"{key_prefix}_localidad_index"] = lista_localidades.index(
+                localidad_previa
+            )
+        else:
+            st.session_state[f"{key_prefix}_localidad_index"] = None
+
+    # Inicializamos el índice de Info Adicional en el state si no existe
+    if f"{key_prefix}_info_adicional_index" not in st.session_state:
+        # Si estamos editando, buscamos el índice de la localidad que ya traía el registro
+        info_adicional_previa = form_data.get("info_adicional")
+
+        if info_adicional_previa in lista_info_adicional:
+            st.session_state[f"{key_prefix}_info_adicional_index"] = (
+                lista_info_adicional.index(info_adicional_previa)
+            )
+        else:
+            st.session_state[f"{key_prefix}_info_adicional_index"] = None
+
+    # FILA 1: Descripción de la Obra (Ancho Completo)
+    desc_obra = st.text_input(
+        "Descripción de la Obra",
+        key=f"{key_prefix}_desc_obra",
+        value=form_data.get("desc_obra", ""),
+    )
+
+    # FILA 2: CUIT Contratista (Ancho Completo con Info)
+    # Creamos un diccionario donde la clave es el CUIT y el valor es el Nombre
+    # Esto hace que el mapeo en format_func sea instantáneo
+    lista_cuit = df_prov.cuit.to_list()
+    cuit_previo = form_data.get("cuit")
+    idx_cuit = lista_cuit.index(cuit_previo) if cuit_previo in lista_cuit else None
+    mapeo_contratistas = dict(zip(df_prov.cuit, df_prov.desc_proveedor))
+
+    cuit = st.selectbox(
+        "Contratista",
+        index=idx_cuit,
+        placeholder="Elegir un Contratista.",
+        options=df_prov.cuit.to_list(),
+        format_func=lambda x: f"{x} - {mapeo_contratistas.get(x, '')}",
+        key=f"{key_prefix}_cuit",
+        help="Seleccione el contratista de la base de datos.",
+    )
+
+    # FILA 3: Actividad + Partida (Ancho Completo con Info)
+    col3_1, col3_2 = st.columns([2, 1])
+    lista_actividades = df_actividades.estructura.to_list()
+    actividad_previa = form_data.get("actividad")
+    idx_actividad = (
+        lista_actividades.index(actividad_previa)
+        if actividad_previa in lista_actividades
+        else None
+    )
+    mapeo_actividades = dict(
+        zip(df_actividades.estructura, df_actividades.desc_estructura)
+    )
+
+    actividad = col3_1.selectbox(
+        "Actividad",
+        index=idx_actividad,
+        placeholder="Elegir una Actividad.",
+        options=lista_actividades,
+        format_func=lambda x: f"{x} - {mapeo_actividades.get(x, '')}",
+        key=f"{key_prefix}_actividad",
+        help="Seleccione la actividad de la base de datos.",
+    )
+
+    partida = col3_2.selectbox(
+        "Partida Presupuestaria",
+        index=st.session_state[f"{key_prefix}_partida_index"],
+        placeholder="Elegir una Partida.",
+        options=["421", "422"],
+        key=f"{key_prefix}_partida",
+    )
+
+    # FILA 4: Cuenta Bancaria + Fuente Financiamiento
+    col4_1, col4_2 = st.columns(2)
+    mapeo_ctas_ctes = dict(zip(df_ctas_ctes.icaro_cta_cte, df_ctas_ctes.desc_cta_cte))
+
+    cta_cte = col4_1.selectbox(
+        "Cuenta Bancaria",
+        index=st.session_state[f"{key_prefix}_cuenta_index"],
+        placeholder="Elegir una Cuenta Bancaria.",
+        options=df_ctas_ctes.icaro_cta_cte.to_list(),
+        format_func=lambda x: f"{x} ({mapeo_ctas_ctes.get(x, '')})",
+        key=f"{key_prefix}_cuenta_corriente",
+    )
+
+    fuente = col4_2.selectbox(
+        "Fuente Financiamiento",
+        index=st.session_state[f"{key_prefix}_fuente_index"],
+        placeholder="Elegir una Fuente de Financiamiento.",
+        options=["10", "11", "13"],
+        key=f"{key_prefix}_fuente",
+    )
+
+    # FILA 5: Localidad + Norma Legal + Info Adicional
+    # Usamos numbers inputs y text inputs con formato para replicar la imagen.
+    col5_1, col5_2, col5_3 = st.columns([1, 1, 1])
+
+    localidad = col5_1.selectbox(
+        "Localidad",
+        index=st.session_state[f"{key_prefix}_localidad_index"],
+        placeholder="Elegir una Localidad.",
+        options=lista_localidades,
+        key=f"{key_prefix}_localidad",
+    )
+
+    norma_legal = col5_2.text_input(
+        "Norma Legal",
+        key=f"{key_prefix}_norma_legal",
+        value=form_data.get("norma_legal", ""),
+    )
+
+    info_adicional = col5_3.selectbox(
+        "Info Adicional",
+        index=st.session_state[f"{key_prefix}_info_adicional_index"],
+        placeholder="Elegir una Info Adicional.",
+        options=lista_info_adicional,
+        key=f"{key_prefix}_info_adicional",
+    )
+
+    # st.markdown("## ")  # Espaciado final
+
+    # FILA 7: BOTONES (Cancel, Agregar) Alineados a la Derecha
+    # En Streamlit, esto es lo más difícil sin usar CSS Sucio. Usamos columnas para empujar a la derecha.
+
+    with st.container(
+        horizontal=True, border=False, horizontal_alignment="center", gap="large"
+    ):
+        # Botón Cancelar (Alineado a la derecha del expander de error o confirmación)
+        if button_cancel("Cancelar", type="secondary", key=f"{key_prefix}_btn_cancel"):
+            st.rerun()  # Cierra el modal de forma segura
+
+        # Botón AGREGAR (Primary, Color Principal)
+        if button_submit(
+            "Editar" if es_edicion else "Agregar",
+            key=f"{key_prefix}_btn_add",
+        ):
+            # 1. Validación de Datos
+            errores = []
+            if raw_nro_comprobante is None:
+                errores.append(
+                    "El número de comprobante es obligatorio y debe ser numérico."
+                )
+            if not tipo or tipo == "":
+                errores.append("Debe seleccionar un Tipo de Comprobante.")
+            if not cuit or cuit == "":
+                errores.append("Debe seleccionar un Contratista.")
+            if not desc_obra or desc_obra == "":
+                errores.append("Debe seleccionar una Obra.")
+            if not cta_cte or cta_cte == "":
+                errores.append("Debe seleccionar una Cuenta Bancaria.")
+            if not fuente or fuente == "":
+                errores.append("Debe seleccionar una Fuente de Financiamiento.")
+            if importe <= 0:
+                errores.append("El importe debe ser mayor a $0.")
+            if avance < 0:
+                errores.append("El avance físico debe ser mayor o igual a 0%.")
+
+            if errores:
+                for err in errores:
+                    st.toast(err, icon="⚠️")
+            else:
+                with st.spinner("Procesando y Guardando..."):
+                    # 2. Preparación del payload para el POST
+                    id_carga = f"{nro_comprobante}{tipo[:1]}"
+                    payload = {
+                        "ejercicio": int(fecha.year),
+                        "mes": f"{str(fecha.month).zfill(2)}/{str(fecha.year)}",
+                        "fecha": fecha.strftime("%Y-%m-%d"),  # Formato ISO para MongoDB
+                        "id_carga": id_carga,
+                        "nro_comprobante": nro_comprobante,
+                        "tipo": tipo,
+                        "fuente": fuente,
+                        "actividad": actividad,
+                        "partida": partida,
+                        "cta_cte": cta_cte,
+                        "cuit": cuit,
+                        "importe": importe,
+                        "fondo_reparo": 0,
+                        "avance": (avance / 100)
+                        if (avance > 0)
+                        else 0,  # Convertimos a decimal para la API
+                        "nro_certificado": nro_certificado,
+                        "desc_obra": desc_obra,
+                        "origen": form_data.get("origen", ""),
+                        "updated_at": form_data.get(
+                            "updated_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        ),
+                    }
+                    # print(
+                    #     "Payload a enviar a ICARO:", payload
+                    # )  # Debug: Ver el payload en la consola
+                    # 3. Llamada al POST_REQUEST (Usando tus funciones existentes)
+                    try:
+                        if es_edicion:
+                            id = str(form_data.get("id"))
+                            # print(f"ID para edición: {id}")  # Debug: Ver el ID en la consola
+                            res = put_request(
+                                endpoint=f"{Endpoints.ICARO_CARGA.value}/update_one/{id}",
+                                json_body=payload,
+                            )
+                        else:
+                            res = post_request(
+                                endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
+                                json_body=payload,
+                            )
+
+                        # if res.status_code in [200, 201]:
+                        if res:
+                            # Feedback visual como vimos antes
+                            st.snow()
+                            st.toast(
+                                f"✅ Comprobante N° {nro_comprobante} {'agreagado' if not es_edicion else 'editado'} con éxito",
+                                icon="📈",
+                            )
+                            # Procedemos a cargar las retenciones y la información de autocarga
+                            # si vengo de AUTOCARGA
+                            if not es_edicion and form_data.get("origen") != "":
+                                payload = build_retenciones_payload(datos_carga)
+                                res_ret = post_request(
+                                    endpoint=Endpoints.ICARO_RETENCIONES.value
+                                    + f"/add_many/{id_carga}",
+                                    json_body=payload,
+                                )
+                                if res_ret:
+                                    st.toast(
+                                        "✅ Retenciones asociadas agregadas con éxito",
+                                        icon="🧾",
+                                    )
+                                else:
+                                    st.toast(
+                                        "⚠️ Error al agregar retenciones asociadas. Por favor, revisa el comprobante.",
+                                        icon="⚠️",
+                                    )
+
+                                payload = {"id_carga": id_carga}
+                                origen = str(form_data.get("origen")).lower()
+                                if origen == "obras":
+                                    res_aut = patch_request(
+                                        endpoint=Endpoints.ICARO_INFORME_CONTABLE.value
+                                        + f"/update_id_carga/{str(form_data.get('id'))}",
+                                        json_body=payload,
+                                    )
+                                    # print(
+                                    #     f"Respuesta al actualizar id_carga en informe contable: {res_aut}"
+                                    # )
+                                if res_aut:
+                                    st.toast(
+                                        "✅ Información de carga actualizada con éxito",
+                                        icon="✅",
+                                    )
+                                    st.session_state[
+                                        f"autocarga_{origen}_uploader_iteration"
+                                    ] += 1
+                                else:
+                                    st.toast(
+                                        "⚠️ Error al actualizar la información de carga. Por favor, revisa el comprobante.",
+                                        icon="⚠️",
+                                    )
+
+                            # Guardamos un flag para el rerun final si es necesario
+                            st.session_state[f"{key_prefix}_post_success"] = True
+                            st.session_state["carga_dataframes_iteration"] += 1
+
+                            # Usamos un pequeño delay para que disfrute los globos y el toast
+                            import time
+
+                            time.sleep(2)
+                            st.rerun()  # Esto cierra el modal y recarga la página principal
+                        # else:
+                        #     st.error(f"⚠️ Error de API ({res.status_code}): {res.text}")
+
+                    except (
+                        ex.AppBaseException
+                    ) as e:  # Captura cualquier error definido por ti
+                        st.error(f"❌ Error: {e}")
+                    except Exception as e:
+                        st.error(f"❌ Ocurrió un error inesperado. {e}")

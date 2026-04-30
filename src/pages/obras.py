@@ -3,19 +3,25 @@ Author: Fernando Corrales <fscpython@gmail.com>
 Purpose: ICARO's Obras Page
 """
 
+from datetime import datetime
+
 import streamlit as st
 
 from src.constants import Endpoints
-from src.services import (
-    get_obras
-)
+from src.services import get_obras
+from src.utils import APIConnectionError, APIResponseError
 from src.views import (
     dataframe_with_buttons,
+    modal_obras,
     report_template_without_filters,
 )
-from src.utils import APIConnectionError, APIResponseError
 
 REPORTE = "obras"
+
+
+# --------------------------------------------------
+def add_obra():
+    modal_obras(key_prefix=f"add_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}")
 
 
 # --------------------------------------------------
@@ -63,6 +69,7 @@ def render() -> None:
                 "localidad",
                 "info_adicional",
             ],
+            add_func=add_obra,
         )
 
 
