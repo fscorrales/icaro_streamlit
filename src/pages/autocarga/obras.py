@@ -71,7 +71,7 @@ def render() -> None:
             event = dataframe(
                 df_certificados,
                 key=f"{REPORTE_OBRAS}_df_certificados",
-                height=300,
+                height=250,
                 column_order=orden_dinamico,
                 on_select="rerun",
                 selection_mode="single-row",
@@ -110,18 +110,39 @@ def render() -> None:
                 # Ordenamos la lista de retenciones por el código (convertido a entero)
                 lista_ordenada = sorted(lista_ret, key=lambda x: int(x["codigo"]))
 
-                # Construimos el diccionario manteniendo el orden de inserción (Python 3.7+)
-                datos_fila = {
-                    item["codigo"]: item["importe"] for item in lista_ordenada
-                }
-                datos_fila["TOTAL"] = sum(datos_fila.values())
+                df_obras = get_obras()
+                coincidencias = df_obras[
+                    df_obras["desc_obra"] == datos_obras["desc_obra"]
+                ]
+                valor_imputacion = ""
+                if not coincidencias.empty:
+                    fila = coincidencias[["actividad", "partida"]].iloc[0]
+                    valor_imputacion = f"{fila['actividad']}-{fila['partida']}"
 
-                st.markdown("### Resumen de Retenciones Calculadas")
-                with st.container(horizontal=False, border=True, width="stretch"):
+                valor_importe_bruto = f"$ {datos_obras['importe_bruto']:,.2f}"
+                valor_retenciones = f"$ {datos_obras['retenciones']:,.2f}"
+                valor_importe_neto = f"$ {datos_obras['importe_neto']:,.2f}"
+
+                # 4. Armamos el DataFrame vertical
+                df_imputacion = pd.DataFrame(
+                    [
+                        {"Concepto": "Imputación", "Valor": valor_imputacion},
+                        {"Concepto": "Importe Bruto", "Valor": valor_importe_bruto},
+                        {"Concepto": "Retenciones", "Valor": valor_retenciones},
+                        {"Concepto": "Importe Neto", "Valor": valor_importe_neto},
+                    ]
+                )
+
+                with st.container(horizontal=True, border=True, width="stretch"):
                     dataframe(
-                        pd.DataFrame([datos_fila]),
-                        key=f"retenciones_{REPORTE_OBRAS}",
-                        height=80,  # Altura pequeña ya que es solo una fila
+                        df_imputacion,
+                        key=f"autocarga_{REPORTE_OBRAS}_imputacion",
+                        height=150,
+                    )
+                    dataframe(
+                        pd.DataFrame(lista_ordenada),
+                        key=f"autocarga_{REPORTE_OBRAS}_retenciones",
+                        height=150,
                     )
 
         if btn_add:
