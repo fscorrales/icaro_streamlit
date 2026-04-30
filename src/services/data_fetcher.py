@@ -21,20 +21,19 @@ from src.utils import get_cache_path
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=86400)
-def get_estructuras(filtro_avanzado: str = "", force_update: bool = False):
+def get_estructuras(filtro_avanzado: str = "", update_trigger: int = 0):
     file_path = os.path.join(get_cache_path(), "estructuras_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    if not force_update and os.path.exists(file_path):
-        # Opcional: Verificar si el archivo tiene menos de 24hs
+    # Si el trigger es 0, intentamos leer el archivo local primero
+    if update_trigger == 0 and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+        # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
-            df_local = pd.read_parquet(file_path)
-            # Aplicamos el filtro si existe, aunque sea local
-            if filtro_avanzado:
-                # Si el filtro es complejo, quizás prefieras re-consultar la API
-                pass
-            return df_local
+            try:
+                return pd.read_parquet(file_path)
+            except Exception:
+                pass  # Si el parquet está corrupto, seguimos a la API
 
     # 2. Si no hay cache o es viejo, consultar API
     params_peticion = {
@@ -61,20 +60,19 @@ def get_estructuras(filtro_avanzado: str = "", force_update: bool = False):
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=86400)
-def get_proveedores(filtro_avanzado: str = "", force_update: bool = False):
+def get_proveedores(filtro_avanzado: str = "", update_trigger: int = 0):
     file_path = os.path.join(get_cache_path(), "proveedores_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    if not force_update and os.path.exists(file_path):
-        # Opcional: Verificar si el archivo tiene menos de 24hs
+    # Si el trigger es 0, intentamos leer el archivo local primero
+    if update_trigger == 0 and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+        # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
-            df_local = pd.read_parquet(file_path)
-            # Aplicamos el filtro si existe, aunque sea local
-            if filtro_avanzado:
-                # Si el filtro es complejo, quizás prefieras re-consultar la API
-                pass
-            return df_local
+            try:
+                return pd.read_parquet(file_path)
+            except Exception:
+                pass  # Si el parquet está corrupto, seguimos a la API
 
     # 2. Si no hay cache o es viejo, consultar API
     params_peticion = {
@@ -101,20 +99,19 @@ def get_proveedores(filtro_avanzado: str = "", force_update: bool = False):
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
-def get_obras(filtro_avanzado: str = "", force_update: bool = False):
+def get_obras(filtro_avanzado: str = "", update_trigger: int = 0):
     file_path = os.path.join(get_cache_path(), "obras_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    if not force_update and os.path.exists(file_path):
-        # Opcional: Verificar si el archivo tiene menos de 24hs
+    # Si el trigger es 0, intentamos leer el archivo local primero
+    if update_trigger == 0 and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+        # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
-            df_local = pd.read_parquet(file_path)
-            # Aplicamos el filtro si existe, aunque sea local
-            if filtro_avanzado:
-                # Si el filtro es complejo, quizás prefieras re-consultar la API
-                pass
-            return df_local
+            try:
+                return pd.read_parquet(file_path)
+            except Exception:
+                pass  # Si el parquet está corrupto, seguimos a la API
 
     # 2. Si no hay cache o es viejo, consultar API
     params_peticion = {
@@ -143,20 +140,19 @@ def get_obras(filtro_avanzado: str = "", force_update: bool = False):
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=86400)
-def get_ctas_ctes(filtro_avanzado: str = "", force_update: bool = False):
+def get_ctas_ctes(filtro_avanzado: str = "", update_trigger: int = 0):
     file_path = os.path.join(get_cache_path(), "ctas_ctes_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    if not force_update and os.path.exists(file_path):
-        # Opcional: Verificar si el archivo tiene menos de 24hs
+    # Si el trigger es 0, intentamos leer el archivo local primero
+    if update_trigger == 0 and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
+        # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
-            df_local = pd.read_parquet(file_path)
-            # Aplicamos el filtro si existe, aunque sea local
-            if filtro_avanzado:
-                # Si el filtro es complejo, quizás prefieras re-consultar la API
-                pass
-            return df_local
+            try:
+                return pd.read_parquet(file_path)
+            except Exception:
+                pass  # Si el parquet está corrupto, seguimos a la API
 
     # 2. Si no hay cache o es viejo, consultar API
     params_peticion = {

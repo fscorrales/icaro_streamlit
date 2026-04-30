@@ -25,6 +25,15 @@ def add_obra():
 
 
 # --------------------------------------------------
+def edit_obra(datos_edicion: dict):
+    modal_obras(
+        key_prefix=f"edit_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        datos_carga=datos_edicion,
+        es_edicion=True,
+    )
+
+
+# --------------------------------------------------
 def render() -> None:
     report_template_without_filters(
         key=REPORTE,
@@ -70,6 +79,7 @@ def render() -> None:
                 "info_adicional",
             ],
             add_func=add_obra,
+            edit_func=edit_obra,
         )
 
 

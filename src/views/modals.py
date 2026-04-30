@@ -396,7 +396,6 @@ def modal_comprobante_gasto(
                                     )
 
                             # Guardamos un flag para el rerun final si es necesario
-                            st.session_state[f"{key_prefix}_post_success"] = True
                             st.session_state["carga_dataframes_iteration"] += 1
 
                             # Usamos un pequeño delay para que disfrute los globos y el toast
@@ -486,7 +485,6 @@ def modal_delete_comprobante(
 # --- MODAL: AGREGAR OBRA ---
 @st.dialog("Agregar / Editar Obra", width="medium")
 def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = False):
-    id_carga = ""
     # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_carga if datos_carga else {}
 
@@ -504,7 +502,7 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
     if f"{key_prefix}_partida_index" not in st.session_state:
         # Si estamos editando, buscamos el índice de la partida que ya traía el registro
         partida_previa = form_data.get("partida")
-        lista_partidas = ["421", "422"]
+        lista_partidas = ["354", "421", "422"]
 
         if partida_previa in lista_partidas:
             st.session_state[f"{key_prefix}_partida_index"] = lista_partidas.index(
@@ -615,7 +613,7 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
         "Partida Presupuestaria",
         index=st.session_state[f"{key_prefix}_partida_index"],
         placeholder="Elegir una Partida.",
-        options=["421", "422"],
+        options=["354", "421", "422"],
         key=f"{key_prefix}_partida",
     )
 
@@ -685,24 +683,20 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
         ):
             # 1. Validación de Datos
             errores = []
-            if raw_nro_comprobante is None:
-                errores.append(
-                    "El número de comprobante es obligatorio y debe ser numérico."
-                )
-            if not tipo or tipo == "":
-                errores.append("Debe seleccionar un Tipo de Comprobante.")
+            if not desc_obra or desc_obra == "":
+                errores.append("Debe ingresar una Descripción de Obra.")
             if not cuit or cuit == "":
                 errores.append("Debe seleccionar un Contratista.")
-            if not desc_obra or desc_obra == "":
-                errores.append("Debe seleccionar una Obra.")
+            if not actividad or actividad == "":
+                errores.append("Debe seleccionar una Actividad.")
+            if not partida or partida == "":
+                errores.append("Debe seleccionar una Partida Presupuestaria.")
             if not cta_cte or cta_cte == "":
                 errores.append("Debe seleccionar una Cuenta Bancaria.")
             if not fuente or fuente == "":
                 errores.append("Debe seleccionar una Fuente de Financiamiento.")
-            if importe <= 0:
-                errores.append("El importe debe ser mayor a $0.")
-            if avance < 0:
-                errores.append("El avance físico debe ser mayor o igual a 0%.")
+            if not localidad or localidad == "":
+                errores.append("Debe seleccionar una Localidad.")
 
             if errores:
                 for err in errores:
@@ -710,27 +704,16 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
             else:
                 with st.spinner("Procesando y Guardando..."):
                     # 2. Preparación del payload para el POST
-                    id_carga = f"{nro_comprobante}{tipo[:1]}"
                     payload = {
-                        "ejercicio": int(fecha.year),
-                        "mes": f"{str(fecha.month).zfill(2)}/{str(fecha.year)}",
-                        "fecha": fecha.strftime("%Y-%m-%d"),  # Formato ISO para MongoDB
-                        "id_carga": id_carga,
-                        "nro_comprobante": nro_comprobante,
-                        "tipo": tipo,
-                        "fuente": fuente,
                         "actividad": actividad,
                         "partida": partida,
+                        "fuente": fuente,
+                        "desc_obra": desc_obra,
+                        "localidad": localidad,
+                        "norma_legal": norma_legal,
+                        "info_adicional": info_adicional,
                         "cta_cte": cta_cte,
                         "cuit": cuit,
-                        "importe": importe,
-                        "fondo_reparo": 0,
-                        "avance": (avance / 100)
-                        if (avance > 0)
-                        else 0,  # Convertimos a decimal para la API
-                        "nro_certificado": nro_certificado,
-                        "desc_obra": desc_obra,
-                        "origen": form_data.get("origen", ""),
                         "updated_at": form_data.get(
                             "updated_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         ),
@@ -744,12 +727,12 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
                             id = str(form_data.get("id"))
                             # print(f"ID para edición: {id}")  # Debug: Ver el ID en la consola
                             res = put_request(
-                                endpoint=f"{Endpoints.ICARO_CARGA.value}/update_one/{id}",
+                                endpoint=f"{Endpoints.ICARO_OBRAS.value}/update_one/{id}",
                                 json_body=payload,
                             )
                         else:
                             res = post_request(
-                                endpoint=Endpoints.ICARO_CARGA.value + "/add_one",
+                                endpoint=Endpoints.ICARO_OBRAS.value + "/add_one",
                                 json_body=payload,
                             )
 
@@ -758,57 +741,12 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
                             # Feedback visual como vimos antes
                             st.snow()
                             st.toast(
-                                f"✅ Comprobante N° {nro_comprobante} {'agreagado' if not es_edicion else 'editado'} con éxito",
+                                f"✅ La obra denominada {desc_obra} {'agregada' if not es_edicion else 'editada'} con éxito",
                                 icon="📈",
                             )
-                            # Procedemos a cargar las retenciones y la información de autocarga
-                            # si vengo de AUTOCARGA
-                            if not es_edicion and form_data.get("origen") != "":
-                                payload = build_retenciones_payload(datos_carga)
-                                res_ret = post_request(
-                                    endpoint=Endpoints.ICARO_RETENCIONES.value
-                                    + f"/add_many/{id_carga}",
-                                    json_body=payload,
-                                )
-                                if res_ret:
-                                    st.toast(
-                                        "✅ Retenciones asociadas agregadas con éxito",
-                                        icon="🧾",
-                                    )
-                                else:
-                                    st.toast(
-                                        "⚠️ Error al agregar retenciones asociadas. Por favor, revisa el comprobante.",
-                                        icon="⚠️",
-                                    )
-
-                                payload = {"id_carga": id_carga}
-                                origen = str(form_data.get("origen")).lower()
-                                if origen == "obras":
-                                    res_aut = patch_request(
-                                        endpoint=Endpoints.ICARO_INFORME_CONTABLE.value
-                                        + f"/update_id_carga/{str(form_data.get('id'))}",
-                                        json_body=payload,
-                                    )
-                                    # print(
-                                    #     f"Respuesta al actualizar id_carga en informe contable: {res_aut}"
-                                    # )
-                                if res_aut:
-                                    st.toast(
-                                        "✅ Información de carga actualizada con éxito",
-                                        icon="✅",
-                                    )
-                                    st.session_state[
-                                        f"autocarga_{origen}_uploader_iteration"
-                                    ] += 1
-                                else:
-                                    st.toast(
-                                        "⚠️ Error al actualizar la información de carga. Por favor, revisa el comprobante.",
-                                        icon="⚠️",
-                                    )
 
                             # Guardamos un flag para el rerun final si es necesario
-                            st.session_state[f"{key_prefix}_post_success"] = True
-                            st.session_state["carga_dataframes_iteration"] += 1
+                            st.session_state["obras_uploader_iteration"] += 1
 
                             # Usamos un pequeño delay para que disfrute los globos y el toast
                             import time

@@ -329,12 +329,19 @@ def dataframe_with_buttons(
     height: int = 150,
     column_order: list = [],
     add_func=None,
+    edit_func=None,
     **kwargs,
 ):
 
     with st.container(horizontal=False, border=True, width="stretch"):
-        dataframe(df, key=f"{key}", height=height, column_order=column_order, on_select="rerun",
-            selection_mode="single-row")
+        event = dataframe(
+            df,
+            key=f"{key}",
+            height=height,
+            column_order=column_order,
+            on_select="rerun",
+            selection_mode="single-row",
+        )
         with st.container(
             horizontal=True,
             border=False,
@@ -346,6 +353,10 @@ def dataframe_with_buttons(
                 if add_func:
                     add_func()
             if button_edit("Editar", key=f"btn_edit_{key}"):
-                pass
+                if edit_func:
+                    if len(event.selection.rows) > 0:
+                        selected_row_index = event.selection.rows[0]
+                        datos_edicion = df.iloc[selected_row_index].to_dict()
+                        edit_func(datos_edicion)
             if button_delete("Borrar", key=f"btn_delete_{key}"):
                 pass

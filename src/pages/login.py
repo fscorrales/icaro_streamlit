@@ -46,13 +46,29 @@ def render_login() -> None:
 
                         with st.status("Preparando ICARO...", expanded=True) as status:
                             st.write("Sincronizando Estructuras...")
-                            get_estructuras()
+                            if "estructuras_uploader_iteration" not in st.session_state:
+                                st.session_state.estructuras_uploader_iteration = 0
+                            get_estructuras(
+                                update_trigger=st.session_state.estructuras_uploader_iteration
+                            )
                             st.write("Sincronizando Obras...")
-                            get_obras()
+                            if "obras_uploader_iteration" not in st.session_state:
+                                st.session_state.obras_uploader_iteration = 0
+                            get_obras(
+                                update_trigger=st.session_state.obras_uploader_iteration
+                            )
                             st.write("Cargando Proveedores...")
-                            get_proveedores()
+                            if "proveedores_uploader_iteration" not in st.session_state:
+                                st.session_state.proveedores_uploader_iteration = 0
+                            get_proveedores(
+                                update_trigger=st.session_state.proveedores_uploader_iteration
+                            )
                             st.write("Verificando Cuentas Corrientes...")
-                            get_ctas_ctes()
+                            if "ctas_ctes_uploader_iteration" not in st.session_state:
+                                st.session_state.ctas_ctes_uploader_iteration = 0
+                            get_ctas_ctes(
+                                update_trigger=st.session_state.ctas_ctes_uploader_iteration
+                            )
                             status.update(
                                 label="Sincronización Completa",
                                 state="complete",

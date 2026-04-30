@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from src.pages.autocarga import epam, obras
+from src.pages.autocarga import autocarga_epam, autocarga_obras
 
 
 def main() -> None:
@@ -10,10 +10,10 @@ def main() -> None:
     tab_obras, tab_epam = st.tabs(["Obras", "EPAM"])
 
     with tab_obras:
-        obras.render()
+        autocarga_obras.render()
 
     with tab_epam:
-        epam.render()
+        autocarga_epam.render()
 
 
 if __name__ == "__main__":
