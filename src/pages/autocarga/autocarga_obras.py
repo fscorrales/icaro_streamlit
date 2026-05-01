@@ -19,6 +19,7 @@ from src.services import (
 from src.utils import APIConnectionError, APIResponseError, build_retenciones_payload
 from src.views import (
     modal_comprobante_gasto,
+    modal_obras,
     report_template_without_filters,
 )
 
@@ -150,14 +151,14 @@ def render() -> None:
                 selected_row_index = event.selection.rows[0]
                 datos_obras = df_certificados.iloc[selected_row_index].to_dict()
 
-                # Traemos el cuit desde el DF de proveedores para completar los datos que le pasamos al modal
+                # --- VALIDACIÓN DE PROVEEDOR ---
                 df_proveedores = get_proveedores()
-                coincidencias = df_proveedores[
+                coincidencias_prov = df_proveedores[
                     df_proveedores["desc_proveedor"] == datos_obras["beneficiario"]
                 ]
-                if not coincidencias.empty:
-                    fila = coincidencias[["cuit"]].iloc[0]
-                    datos_obras.update(fila.to_dict())
+                proveedor_valido = not coincidencias_prov.empty
+                if proveedor_valido:
+                    datos_obras.update(coincidencias_prov[["cuit"]].iloc[0].to_dict())
                 else:
                     # 1. Alerta rápida en la esquina
                     st.toast("⚠️ Proveedor no encontrado", icon="👤")
@@ -177,29 +178,49 @@ def render() -> None:
                             icon="⚙️",
                         ):
                             pass
-                        st.stop()  # Detenemos la ejecución para que no abra el modal vacío
+                        # st.stop()  # Detenemos la ejecución para que no abra el modal vacío
 
-                # Traemos la fuente y cta_cte desde el DF de obras para completar los datos que le pasamos al modal
+                # --- VALIDACIÓN DE OBRA ---
                 df_obras = get_obras()
-                coincidencias = df_obras[
+                coincidencias_obra = df_obras[
                     df_obras["desc_obra"] == datos_obras["desc_obra"]
                 ]
-
-                if not coincidencias.empty:
-                    fila = coincidencias[
-                        ["actividad", "partida", "fuente", "cta_cte"]
-                    ].iloc[0]
-                    datos_obras.update(fila.to_dict())
+                obra_valida = not coincidencias_obra.empty
+                if obra_valida:
+                    datos_obras.update(
+                        coincidencias_obra[
+                            ["actividad", "partida", "fuente", "cta_cte"]
+                        ]
+                        .iloc[0]
+                        .to_dict()
+                    )
                 else:
-                    print("No se encontró la obra.")
+                    # 1. Alerta rápida en la esquina
+                    st.toast("⚠️ Obra no encontrada", icon="🏗️")
+
+                    # 2. Mensaje con acción en el cuerpo de la página
+                    with error_placeholder.container(
+                        horizontal=False,
+                        width="stretch",
+                        horizontal_alignment="center",
+                    ):
+                        st.error(
+                            f"La obra '{datos_obras['desc_obra']}' no existe en la base de datos."
+                        )
+                        modal_obras(
+                            key_prefix=f"add_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                            datos_carga=datos_obras,
+                            es_edicion=False,
+                        )
 
                 datos_obras["importe"] = float(datos_obras["importe_bruto"])
                 datos_obras["origen"] = "Obras"
                 # print(datos_obras)
-                modal_comprobante_gasto(
-                    key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                    datos_carga=datos_obras,
-                )
+                if obra_valida and proveedor_valido:
+                    modal_comprobante_gasto(
+                        key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                        datos_carga=datos_obras,
+                    )
 
         if btn_edit:
             pass
