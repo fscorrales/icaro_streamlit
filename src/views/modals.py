@@ -491,7 +491,12 @@ def modal_delete_gasto(
 
 # --- MODAL: AGREGAR OBRA ---
 @st.dialog("Agregar / Editar Obra", width="medium")
-def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = False):
+def modal_obras(
+    key_prefix: str,
+    datos_carga: dict = None,
+    es_edicion: bool = False,
+    es_autocarga: bool = False,
+):
     # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
     form_data = datos_carga if datos_carga else {}
 
@@ -576,6 +581,7 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
         "Descripción de la Obra",
         key=f"{key_prefix}_desc_obra",
         value=form_data.get("desc_obra", ""),
+        disabled=es_autocarga,
     )
 
     # FILA 2: CUIT Contratista (Ancho Completo con Info)

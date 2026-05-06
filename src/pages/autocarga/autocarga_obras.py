@@ -215,6 +215,7 @@ def render() -> None:
                             key_prefix=f"add_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                             datos_carga=datos_obras,
                             es_edicion=False,
+                            es_autocarga=True,
                         )
 
                 datos_obras["importe"] = float(datos_obras["importe_bruto"])
