@@ -111,7 +111,9 @@ def render() -> None:
                 # Ordenamos la lista de retenciones por el código (convertido a entero)
                 lista_ordenada = sorted(lista_ret, key=lambda x: int(x["codigo"]))
 
-                df_obras = get_obras()
+                df_obras = get_obras(
+                    update_trigger=st.session_state.get("obras_uploader_iteration", 0)
+                )
                 coincidencias = df_obras[
                     df_obras["desc_obra"] == datos_obras["desc_obra"]
                 ]
@@ -181,7 +183,9 @@ def render() -> None:
                         # st.stop()  # Detenemos la ejecución para que no abra el modal vacío
 
                 # --- VALIDACIÓN DE OBRA ---
-                df_obras = get_obras()
+                df_obras = get_obras(
+                    update_trigger=st.session_state.get("obras_uploader_iteration", 0)
+                )
                 coincidencias_obra = df_obras[
                     df_obras["desc_obra"] == datos_obras["desc_obra"]
                 ]

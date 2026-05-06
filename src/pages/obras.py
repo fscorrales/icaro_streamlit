@@ -12,6 +12,7 @@ from src.services import get_obras
 from src.utils import APIConnectionError, APIResponseError
 from src.views import (
     dataframe_with_buttons,
+    modal_delete_registro_gral,
     modal_obras,
     report_template_without_filters,
 )
@@ -33,6 +34,15 @@ def edit_obra(datos_edicion: dict):
     )
 
 
+def delete_obra(id_mongo: str, desc_obra: str):
+    modal_delete_registro_gral(
+        endpoint=f"{Endpoints.ICARO_OBRAS.value}/delete_one/{id_mongo}",
+        desc_registro=desc_obra,
+        session_state_update_key="obras_uploader_iteration",
+        key_prefix=f"delete_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+    )
+
+
 # --------------------------------------------------
 def render() -> None:
     report_template_without_filters(
@@ -48,7 +58,10 @@ def render() -> None:
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
-        df_obras = get_obras(filtro_actual)
+        df_obras = get_obras(
+            filtro_avanzado=filtro_actual,
+            update_trigger=st.session_state.get("obras_uploader_iteration", 0),
+        )
 
         if df_obras.empty:
             st.info("No se encontraron resultados.")
@@ -80,6 +93,7 @@ def render() -> None:
             ],
             add_func=add_obra,
             edit_func=edit_obra,
+            delete_func=delete_obra,
         )
 
 

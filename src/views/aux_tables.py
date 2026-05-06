@@ -330,6 +330,7 @@ def dataframe_with_buttons(
     column_order: list = [],
     add_func=None,
     edit_func=None,
+    delete_func=None,
     **kwargs,
 ):
 
@@ -359,4 +360,9 @@ def dataframe_with_buttons(
                         datos_edicion = df.iloc[selected_row_index].to_dict()
                         edit_func(datos_edicion)
             if button_delete("Borrar", key=f"btn_delete_{key}"):
-                pass
+                if delete_func:
+                    if len(event.selection.rows) > 0:
+                        selected_row_index = event.selection.rows[0]
+                        id_mongo = df.iloc[selected_row_index]["id"]
+                        desc_obra = df.iloc[selected_row_index]["desc_obra"]
+                        delete_func(id_mongo=id_mongo, desc_obra=desc_obra)

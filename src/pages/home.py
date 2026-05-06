@@ -27,7 +27,7 @@ from src.utils import APIConnectionError, APIResponseError
 from src.views import (
     dataframe_with_buttons,
     modal_comprobante_gasto,
-    modal_delete_comprobante,
+    modal_delete_gasto,
     params_preparation,
 )
 
@@ -107,7 +107,7 @@ def dataframe_home_carga(
                     selected_row_index = event.selection.rows[0]
                     form_data = df_carga.iloc[selected_row_index].to_dict()
                     # Disparamos el modal de confirmación
-                    modal_delete_comprobante(
+                    modal_delete_gasto(
                         id_mongo=str(form_data.get("id")),
                         id_carga_contable=form_data.get("id_carga"),
                         origen=form_data.get("origen", ""),

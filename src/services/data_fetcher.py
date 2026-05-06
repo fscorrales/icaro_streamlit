@@ -100,6 +100,7 @@ def get_proveedores(filtro_avanzado: str = "", update_trigger: int = 0):
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
 def get_obras(filtro_avanzado: str = "", update_trigger: int = 0):
+
     file_path = os.path.join(get_cache_path(), "obras_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
