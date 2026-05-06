@@ -763,7 +763,8 @@ def modal_obras(
 
                             # Guardamos un flag para el rerun final si es necesario
                             st.session_state["obras_uploader_iteration"] += 1
-
+                            if es_edicion:
+                                st.session_state["carga_dataframes_iteration"] += 1
                             # Usamos un pequeño delay para que disfrute los globos y el toast
                             import time
 
