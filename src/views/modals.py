@@ -1,4 +1,9 @@
-__all__ = ["modal_comprobante_gasto", "modal_delete_comprobante", "modal_obras"]
+__all__ = [
+    "modal_comprobante_gasto",
+    "modal_delete_gasto",
+    "modal_obras",
+    "modal_delete_registro_gral",
+]
 
 from datetime import date, datetime
 
@@ -30,7 +35,9 @@ def modal_comprobante_gasto(
     form_data = datos_carga if datos_carga else {}
 
     # Traemos los DATOS
-    df_obras = get_obras()
+    df_obras = get_obras(
+        update_trigger=st.session_state.get("obras_uploader_iteration", 0)
+    )
     df_ctas_ctes = get_ctas_ctes()
     df_prov = get_proveedores()
 
@@ -416,7 +423,7 @@ def modal_comprobante_gasto(
 
 # --- MODAL: ELIMINAR COMPROBANTE DE GASTO ---
 @st.dialog("Confirmar Eliminación PERMANENTE", width="small")
-def modal_delete_comprobante(
+def modal_delete_gasto(
     id_mongo: str, id_carga_contable: str, origen: str = "", key_prefix: str = ""
 ):
     st.warning(
@@ -493,10 +500,13 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
     df_prov = get_proveedores()
     df_actividades = get_estructuras()
     df_actividades = df_actividades[df_actividades["estructura"].str.len() == 11]
-    lista_localidades = (
-        get_obras()["localidad"].str.title().sort_values().unique().tolist()
+    df_obras = get_obras(
+        update_trigger=st.session_state.get("obras_uploader_iteration", 0)
     )
-    lista_info_adicional = get_obras()["info_adicional"].sort_values().unique().tolist()
+    lista_localidades = (
+        df_obras["localidad"].str.title().sort_values().unique().tolist()
+    )
+    lista_info_adicional = df_obras["info_adicional"].sort_values().unique().tolist()
 
     # Inicializamos el índice de partida en el state si no existe
     if f"{key_prefix}_partida_index" not in st.session_state:
@@ -710,8 +720,8 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
                         "fuente": fuente,
                         "desc_obra": desc_obra,
                         "localidad": localidad,
-                        "norma_legal": norma_legal,
-                        "info_adicional": info_adicional,
+                        "norma_legal": norma_legal or "",
+                        "info_adicional": info_adicional or "",
                         "cta_cte": cta_cte,
                         "cuit": cuit,
                         "updated_at": form_data.get(
@@ -762,3 +772,52 @@ def modal_obras(key_prefix: str, datos_carga: dict = None, es_edicion: bool = Fa
                         st.error(f"❌ Error: {e}")
                     except Exception as e:
                         st.error(f"❌ Ocurrió un error inesperado. {e}")
+
+
+# --- MODAL: ELIMINAR COMPROBANTE GENERICO ---
+@st.dialog("Confirmar Eliminación PERMANENTE", width="small")
+def modal_delete_registro_gral(
+    endpoint: str,
+    desc_registro: str,
+    session_state_update_key: str = None,
+    key_prefix: str = "",
+):
+    st.warning(
+        f"⚠️ ¿Estás seguro de que deseás eliminar el registro **{desc_registro}**?"
+    )
+    st.write(
+        "Esta acción es permanente y también eliminará todas las retenciones asociadas."
+    )
+
+    st.markdown("---")
+    with st.container(
+        horizontal=True, border=False, horizontal_alignment="center", gap="large"
+    ):
+        if button_cancel("Cancelar", key=f"{key_prefix}_btn_cancel", type="secondary"):
+            st.rerun()
+
+        if button_submit("Si, Eliminar", key=f"{key_prefix}_btn_eliminar"):
+            with st.spinner("Eliminando registro..."):
+                try:
+                    res = delete_request(endpoint)
+
+                    if res:
+                        st.success("Registro eliminado correctamente.")
+                        if session_state_update_key:
+                            if session_state_update_key not in st.session_state:
+                                st.session_state[session_state_update_key] = 0
+                            else:
+                                st.session_state[session_state_update_key] += 1
+
+                    else:
+                        st.error(
+                            "Error al eliminar el registro. Por favor, intenta nuevamente."
+                        )
+
+                    import time
+
+                    time.sleep(2)
+                    st.rerun()
+
+                except Exception as e:
+                    st.error(f"Error al eliminar: {e}")
