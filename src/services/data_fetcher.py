@@ -26,7 +26,7 @@ def get_estructuras(filtro_avanzado: str = "", update_trigger: int = 0):
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
     # Si el trigger es 0, intentamos leer el archivo local primero
-    if update_trigger == 0 and os.path.exists(file_path):
+    if filtro_avanzado == "" and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
@@ -46,7 +46,8 @@ def get_estructuras(filtro_avanzado: str = "", update_trigger: int = 0):
         if not df.empty:
             df = df.sort_values(["estructura"], ascending=True)
             # 3. Guardar en disco para la próxima vez
-            df.to_parquet(file_path)
+            if filtro_avanzado == "":
+                df.to_parquet(file_path)
             return df
 
     except Exception as e:
@@ -64,8 +65,7 @@ def get_proveedores(filtro_avanzado: str = "", update_trigger: int = 0):
     file_path = os.path.join(get_cache_path(), "proveedores_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    # Si el trigger es 0, intentamos leer el archivo local primero
-    if update_trigger == 0 and os.path.exists(file_path):
+    if filtro_avanzado == "" and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
@@ -85,7 +85,8 @@ def get_proveedores(filtro_avanzado: str = "", update_trigger: int = 0):
         if not df.empty:
             df = df.sort_values(["desc_proveedor"], ascending=True)
             # 3. Guardar en disco para la próxima vez
-            df.to_parquet(file_path)
+            if filtro_avanzado == "":
+                df.to_parquet(file_path)
             return df
 
     except Exception as e:
@@ -104,8 +105,7 @@ def get_obras(filtro_avanzado: str = "", update_trigger: int = 0):
     file_path = os.path.join(get_cache_path(), "obras_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    # Si el trigger es 0, intentamos leer el archivo local primero
-    if update_trigger == 0 and os.path.exists(file_path):
+    if filtro_avanzado == "" and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
@@ -126,8 +126,9 @@ def get_obras(filtro_avanzado: str = "", update_trigger: int = 0):
             df = df.sort_values(
                 ["actividad", "partida", "fuente", "desc_obra"], ascending=True
             )
-            # 3. Guardar en disco para la próxima vez
-            df.to_parquet(file_path)
+            # 3. Guardar en disco para la próxima vez, si no hay filtro
+            if filtro_avanzado == "":
+                df.to_parquet(file_path)
             return df
 
     except Exception as e:
@@ -146,7 +147,7 @@ def get_ctas_ctes(filtro_avanzado: str = "", update_trigger: int = 0):
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
     # Si el trigger es 0, intentamos leer el archivo local primero
-    if update_trigger == 0 and os.path.exists(file_path):
+    if filtro_avanzado and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
@@ -167,7 +168,8 @@ def get_ctas_ctes(filtro_avanzado: str = "", update_trigger: int = 0):
             df = df.loc[df["icaro_cta_cte"] != ""]
             df = df.sort_values(["map_to"], ascending=True)
             # 3. Guardar en disco para la próxima vez
-            df.to_parquet(file_path)
+            if filtro_avanzado == "":
+                df.to_parquet(file_path)
             return df
 
     except Exception as e:

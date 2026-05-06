@@ -55,13 +55,11 @@ def render() -> None:
 
     # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
     filtro_actual = st.session_state.get(f"{REPORTE}_advanced_filter", "")
+    trigger = st.session_state.get("obras_uploader_iteration", 0)
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
-        df_obras = get_obras(
-            filtro_avanzado=filtro_actual,
-            update_trigger=st.session_state.get("obras_uploader_iteration", 0),
-        )
+        df_obras = get_obras(filtro_avanzado=filtro_actual, update_trigger=trigger)
 
         if df_obras.empty:
             st.info("No se encontraron resultados.")
