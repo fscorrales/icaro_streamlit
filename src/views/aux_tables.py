@@ -331,6 +331,7 @@ def dataframe_with_buttons(
     add_func=None,
     edit_func=None,
     delete_func=None,
+    show_buttons: bool = True,
     **kwargs,
 ):
 
@@ -343,26 +344,27 @@ def dataframe_with_buttons(
             on_select="rerun",
             selection_mode="single-row",
         )
-        with st.container(
-            horizontal=True,
-            border=False,
-            width="stretch",
-            horizontal_alignment="center",
-            gap="medium",
-        ):
-            if button_add("Agregar", key=f"btn_add_{key}", type="primary"):
-                if add_func:
-                    add_func()
-            if button_edit("Editar", key=f"btn_edit_{key}"):
-                if edit_func:
-                    if len(event.selection.rows) > 0:
-                        selected_row_index = event.selection.rows[0]
-                        datos_edicion = df.iloc[selected_row_index].to_dict()
-                        edit_func(datos_edicion)
-            if button_delete("Borrar", key=f"btn_delete_{key}"):
-                if delete_func:
-                    if len(event.selection.rows) > 0:
-                        selected_row_index = event.selection.rows[0]
-                        id_mongo = df.iloc[selected_row_index]["id"]
-                        desc_obra = df.iloc[selected_row_index]["desc_obra"]
-                        delete_func(id_mongo=id_mongo, desc_obra=desc_obra)
+        if show_buttons:
+            with st.container(
+                horizontal=True,
+                border=False,
+                width="stretch",
+                horizontal_alignment="center",
+                gap="medium",
+            ):
+                if button_add("Agregar", key=f"btn_add_{key}", type="primary"):
+                    if add_func:
+                        add_func()
+                if button_edit("Editar", key=f"btn_edit_{key}"):
+                    if edit_func:
+                        if len(event.selection.rows) > 0:
+                            selected_row_index = event.selection.rows[0]
+                            datos_edicion = df.iloc[selected_row_index].to_dict()
+                            edit_func(datos_edicion)
+                if button_delete("Borrar", key=f"btn_delete_{key}"):
+                    if delete_func:
+                        if len(event.selection.rows) > 0:
+                            selected_row_index = event.selection.rows[0]
+                            id_mongo = df.iloc[selected_row_index]["id"]
+                            desc_obra = df.iloc[selected_row_index]["desc_obra"]
+                            delete_func(id_mongo=id_mongo, desc_obra=desc_obra)

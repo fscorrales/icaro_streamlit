@@ -265,6 +265,7 @@ def icaro_carga_template(
                         "partida",
                         "importe",
                     ],
+                    show_buttons=False,
                 )
                 dataframe_with_buttons(
                     df_ret_filtrado,
@@ -273,6 +274,7 @@ def icaro_carga_template(
                         "codigo",
                         "importe",
                     ],
+                    show_buttons=False,
                 )
 
 
