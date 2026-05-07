@@ -328,6 +328,7 @@ def dataframe_with_buttons(
     key: str = "df_with_btns",
     height: int = 150,
     column_order: list = [],
+    selection_mode: str = None,
     add_func=None,
     edit_func=None,
     delete_func=None,
@@ -341,8 +342,8 @@ def dataframe_with_buttons(
             key=f"{key}",
             height=height,
             column_order=column_order,
-            on_select="rerun",
-            selection_mode="single-row",
+            on_select="rerun" if selection_mode else "ignore",
+            selection_mode=selection_mode or "multi-row",
         )
         if show_buttons:
             with st.container(
@@ -352,16 +353,23 @@ def dataframe_with_buttons(
                 horizontal_alignment="center",
                 gap="medium",
             ):
-                if button_add("Agregar", key=f"btn_add_{key}", type="primary"):
+                if button_add(
+                    "Agregar",
+                    key=f"btn_add_{key}",
+                    type="primary",
+                    disabled=not add_func,
+                ):
                     if add_func:
                         add_func()
-                if button_edit("Editar", key=f"btn_edit_{key}"):
+                if button_edit("Editar", key=f"btn_edit_{key}", disabled=not edit_func):
                     if edit_func:
                         if len(event.selection.rows) > 0:
                             selected_row_index = event.selection.rows[0]
                             datos_edicion = df.iloc[selected_row_index].to_dict()
                             edit_func(datos_edicion)
-                if button_delete("Borrar", key=f"btn_delete_{key}"):
+                if button_delete(
+                    "Borrar", key=f"btn_delete_{key}", disabled=not delete_func
+                ):
                     if delete_func:
                         if len(event.selection.rows) > 0:
                             selected_row_index = event.selection.rows[0]

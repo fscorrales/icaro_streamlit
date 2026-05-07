@@ -48,7 +48,7 @@ def dataframe_home_carga(
             key=f"df_carga_{key}",
             height=height,
             on_select="rerun",
-            selection_mode="single-row",
+            selection_mode="single-row-required",
             column_order=[
                 "mes",
                 "fecha",

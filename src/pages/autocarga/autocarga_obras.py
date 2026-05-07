@@ -93,8 +93,12 @@ def render() -> None:
                     btn_add = button_add(
                         "Agregar", key=f"btn_add_{REPORTE_OBRAS}", type="primary"
                     )
-                    btn_edit = button_edit("Editar", key=f"btn_edit_{REPORTE_OBRAS}")
-                    btn_del = button_delete("Borrar", key=f"btn_delete_{REPORTE_OBRAS}")
+                    btn_edit = button_edit(
+                        "Editar", key=f"btn_edit_{REPORTE_OBRAS}", disabled=True
+                    )
+                    btn_del = button_delete(
+                        "Borrar", key=f"btn_delete_{REPORTE_OBRAS}", disabled=True
+                    )
 
                 # --- EL PLACEHOLDER VA AQUÍ (DEBAJO DE LOS BOTONES) ---
                 error_placeholder = st.empty()

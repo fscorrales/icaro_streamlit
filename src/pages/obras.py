@@ -89,6 +89,7 @@ def render() -> None:
                 "localidad",
                 "info_adicional",
             ],
+            selection_mode="single-row",
             add_func=add_obra,
             edit_func=edit_obra,
             delete_func=delete_obra,

@@ -7,11 +7,11 @@ import streamlit as st
 
 from src.constants import Endpoints
 from src.services.data_fetcher import get_estructuras
+from src.utils import APIConnectionError, APIResponseError
 from src.views import (
     dataframe_with_buttons,
     report_template_without_filters,
 )
-from src.utils import APIConnectionError, APIResponseError
 
 REPORTE = "estructura"
 
@@ -51,6 +51,7 @@ def render() -> None:
             key=f"{REPORTE}_df_obras",
             height=300,
             column_order=["estructura", "desc_estructura"],
+            selection_mode="single-row",
         )
 
 
