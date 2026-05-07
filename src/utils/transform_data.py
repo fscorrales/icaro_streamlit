@@ -1,4 +1,4 @@
-__all__ = ["build_retenciones_payload"]
+__all__ = ["build_retenciones_payload", "formato_moneda_ar"]
 
 
 # --------------------------------------------------
@@ -28,3 +28,9 @@ def build_retenciones_payload(data: dict) -> dict:
             )
 
     return {"retenciones": payload_items}
+
+
+# --------------------------------------------------
+def formato_moneda_ar(valor):
+    # Formato inicial: 1,234.56 -> X para no solapar reemplazos
+    return f"$ {valor:,.2f}".replace(",", "X").replace(".", ",").replace("X", ".")
