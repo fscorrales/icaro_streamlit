@@ -34,10 +34,10 @@ def edit_obra(datos_edicion: dict):
     )
 
 
-def delete_obra(id_mongo: str, desc_obra: str):
+def delete_obra(datos_eliminar: dict):
     modal_delete_registro_gral(
-        endpoint=f"{Endpoints.ICARO_OBRAS.value}/delete_one/{id_mongo}",
-        desc_registro=desc_obra,
+        endpoint=f"{Endpoints.ICARO_OBRAS.value}/delete_one/{datos_eliminar['id']}",
+        desc_registro=datos_eliminar["desc_obra"],
         session_state_update_key="obras_uploader_iteration",
         key_prefix=f"delete_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}",
     )

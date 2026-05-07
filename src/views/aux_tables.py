@@ -365,6 +365,5 @@ def dataframe_with_buttons(
                     if delete_func:
                         if len(event.selection.rows) > 0:
                             selected_row_index = event.selection.rows[0]
-                            id_mongo = df.iloc[selected_row_index]["id"]
-                            desc_obra = df.iloc[selected_row_index]["desc_obra"]
-                            delete_func(id_mongo=id_mongo, desc_obra=desc_obra)
+                            datos_eliminar = df.iloc[selected_row_index].to_dict()
+                            delete_func(datos_eliminar)
