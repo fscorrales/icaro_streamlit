@@ -26,7 +26,7 @@ def get_estructuras(filtro_avanzado: str = "", update_trigger: int = 0):
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
     # Si el trigger es 0, intentamos leer el archivo local primero
-    if filtro_avanzado == "" and os.path.exists(file_path):
+    if update_trigger == 0 and filtro_avanzado == "" and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
@@ -65,7 +65,7 @@ def get_proveedores(filtro_avanzado: str = "", update_trigger: int = 0):
     file_path = os.path.join(get_cache_path(), "proveedores_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    if filtro_avanzado == "" and os.path.exists(file_path):
+    if update_trigger == 0 and filtro_avanzado == "" and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
@@ -101,11 +101,10 @@ def get_proveedores(filtro_avanzado: str = "", update_trigger: int = 0):
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl=3600)
 def get_obras(filtro_avanzado: str = "", update_trigger: int = 0):
-
     file_path = os.path.join(get_cache_path(), "obras_cache.parquet")
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
-    if filtro_avanzado == "" and os.path.exists(file_path):
+    if update_trigger == 0 and filtro_avanzado == "" and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):
@@ -147,7 +146,7 @@ def get_ctas_ctes(filtro_avanzado: str = "", update_trigger: int = 0):
 
     # 1. Intentar cargar desde archivo local si no se fuerza la actualización
     # Si el trigger es 0, intentamos leer el archivo local primero
-    if filtro_avanzado and os.path.exists(file_path):
+    if update_trigger == 0 and filtro_avanzado == "" and os.path.exists(file_path):
         mtime = datetime.fromtimestamp(os.path.getmtime(file_path))
         # Si el archivo tiene menos de 24hs, lo usamos
         if datetime.now() - mtime < timedelta(hours=24):

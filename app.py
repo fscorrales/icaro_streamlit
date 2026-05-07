@@ -12,6 +12,12 @@ import time
 import streamlit as st
 
 from src.pages.login import render_login
+from src.services.data_fetcher import (
+    get_ctas_ctes,
+    get_estructuras,
+    get_obras,
+    get_proveedores,
+)
 from src.utils.version import get_version
 
 st.set_page_config(
@@ -110,6 +116,32 @@ def build_navigation() -> None:
 
     # 3. Sidebar: Info de usuario y Logout
     with st.sidebar:
+        if st.button(
+            "🔄 Sincronizar Datos",
+            use_container_width=True,
+            help="Descarga los datos más recientes de la API",
+        ):
+            # Incrementamos el trigger de las funciones con .parquet
+            st.session_state.estructuras_uploader_iteration += 1
+            get_estructuras(
+                update_trigger=st.session_state.estructuras_uploader_iteration
+            )
+            st.session_state.obras_uploader_iteration += 1
+            get_obras(update_trigger=st.session_state.obras_uploader_iteration)
+            st.session_state.proveedores_uploader_iteration += 1
+            get_proveedores(
+                update_trigger=st.session_state.proveedores_uploader_iteration
+            )
+            st.session_state.ctas_ctes_uploader_iteration += 1
+            get_ctas_ctes(update_trigger=st.session_state.ctas_ctes_uploader_iteration)
+
+            # Opcional: limpiar el caché de Streamlit para asegurar que no haya basura
+            # st.cache_data.clear()
+            st.toast("Sincronizando con el servidor...", icon="🚀")
+            time.sleep(1)  # Simula un pequeño delay para que se vea el toast
+
+            st.rerun()
+
         # Generamos espacio en blanco dinámico
         # Si tienes 6 páginas, unos 12 a 15 st.write("") suelen bastar
         # para mandarlo al fondo en una pantalla estándar.
