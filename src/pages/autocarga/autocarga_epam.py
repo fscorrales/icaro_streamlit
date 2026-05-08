@@ -10,6 +10,7 @@ from src.components import button_add, button_delete, button_edit, dataframe
 from src.constants import Endpoints
 from src.services import (
     get_autocarga_epam,
+    get_obras,
     process_resumen_rend_obras,
 )
 from src.utils import (
@@ -113,7 +114,6 @@ def render() -> None:
                     .to_dict()
                 )
                 payload_retenciones = build_retenciones_payload(df_suma)
-                print(payload_retenciones)
 
                 # Extraemos los datos crudos
                 lista_ret = payload_retenciones.get("retenciones", [])
@@ -127,16 +127,33 @@ def render() -> None:
                     formato_moneda_ar
                 )
 
-                #         df_obras = get_obras(
-                #             update_trigger=st.session_state.get("obras_uploader_iteration", 0)
-                #         )
-                #         coincidencias = df_obras[
-                #             df_obras["desc_obra"] == datos_obras["desc_obra"]
-                #         ]
-                #         valor_imputacion = ""
-                #         if not coincidencias.empty:
-                #             fila = coincidencias[["actividad", "partida"]].iloc[0]
-                #             valor_imputacion = f"{fila['actividad']}-{fila['partida']}"
+                # Creamos la tabla resumen de imputacion y totales
+                df_obras = get_obras(
+                    update_trigger=st.session_state.get("obras_uploader_iteration", 0)
+                )
+
+                coincidencias = df_obras[
+                    df_obras["desc_obra"].isin(
+                        df_epam.iloc[selected_indices]["desc_obra"].unique().tolist()
+                    )
+                ]
+
+                valor_imputacion = "Sin coincidencia"
+
+                if not coincidencias.empty:
+                    # Verificamos si todas las filas seleccionadas pertenecen a la misma imputación
+                    # Agrupamos por actividad y partida para ver si hay una sola combinación
+                    imputaciones_unicas = coincidencias.drop_duplicates(
+                        subset=["actividad", "partida"]
+                    )
+
+                    if len(imputaciones_unicas) == 1:
+                        # Caso ideal: Una sola combinación Actividad-Partida para todo lo seleccionado
+                        fila = imputaciones_unicas.iloc[0]
+                        valor_imputacion = f"{fila['actividad']} - {fila['partida']}"
+                    else:
+                        # Caso mixto: Se seleccionaron filas de distintas partidas/actividades
+                        valor_imputacion = "Múltiples Imputaciones"
 
                 valor_importe_bruto = formato_moneda_ar(df_suma["importe_bruto"])
                 valor_retenciones = formato_moneda_ar(
@@ -147,7 +164,7 @@ def render() -> None:
                 #         # 4. Armamos el DataFrame vertical
                 df_imputacion = pd.DataFrame(
                     [
-                        {"Concepto": "Imputación", "Valor": "valor_imputacion"},
+                        {"Concepto": "Imputación", "Valor": valor_imputacion},
                         {"Concepto": "Importe Bruto", "Valor": valor_importe_bruto},
                         {"Concepto": "Retenciones", "Valor": valor_retenciones},
                         {"Concepto": "Importe Neto", "Valor": valor_importe_neto},
