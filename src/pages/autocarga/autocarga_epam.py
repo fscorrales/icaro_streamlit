@@ -3,6 +3,8 @@ Author: Fernando Corrales <fscpython@gmail.com>
 Purpose: ICARO's Autocarga Page
 """
 
+from datetime import datetime
+
 import pandas as pd
 import streamlit as st
 
@@ -11,6 +13,7 @@ from src.constants import Endpoints
 from src.services import (
     get_autocarga_epam,
     get_obras,
+    get_proveedores,
     process_resumen_rend_obras,
 )
 from src.utils import (
@@ -20,6 +23,8 @@ from src.utils import (
     formato_moneda_ar,
 )
 from src.views import (
+    modal_comprobante_gasto,
+    modal_obras,
     report_template_without_filters,
 )
 
@@ -183,89 +188,120 @@ def render() -> None:
                         height=150,
                     )
 
-        # if btn_add:
-        #     if len(event.selection.rows) > 0:
-        #         selected_row_index = event.selection.rows[0]
-        #         datos_obras = df_certificados.iloc[selected_row_index].to_dict()
+        if btn_add:
+            if len(event.selection.rows) > 0:
+                selected_indices = event.selection.rows
+                datos_epam = {}
 
-        #         # --- VALIDACIÓN DE PROVEEDOR ---
-        #         df_proveedores = get_proveedores()
-        #         coincidencias_prov = df_proveedores[
-        #             df_proveedores["desc_proveedor"] == datos_obras["beneficiario"]
-        #         ]
-        #         proveedor_valido = not coincidencias_prov.empty
-        #         if proveedor_valido:
-        #             datos_obras.update(coincidencias_prov[["cuit"]].iloc[0].to_dict())
-        #         else:
-        #             # 1. Alerta rápida en la esquina
-        #             st.toast("⚠️ Proveedor no encontrado", icon="👤")
+                # --- VALIDACIÓN DE PROVEEDOR ---
+                df_proveedores = get_proveedores(
+                    update_trigger=st.session_state.get(
+                        "proveedores_uploader_iteration", 0
+                    )
+                )
 
-        #             # 2. Mensaje con acción en el cuerpo de la página
-        #             with error_placeholder.container(
-        #                 horizontal=False,
-        #                 width="stretch",
-        #                 horizontal_alignment="center",
-        #             ):
-        #                 st.error(
-        #                     f"El beneficiario '{datos_obras['beneficiario']}' no existe en la base de datos."
-        #                 )
-        #                 if st.page_link(
-        #                     "src/pages/proveedores.py",
-        #                     label="Ir a Actualizar Proveedores",
-        #                     icon="⚙️",
-        #                 ):
-        #                     pass
-        #                 # st.stop()  # Detenemos la ejecución para que no abra el modal vacío
+                unique_beneficiarios = (
+                    df_epam.iloc[selected_indices]["beneficiario"].unique().tolist()
+                )
+                if len(unique_beneficiarios) > 1:
+                    proveedor_valido = (
+                        True  # Suponemos que el proveedor a cargar en SIIF es INVICO
+                    )
+                    datos_epam["cuit"] = "30632351514"
+                else:
+                    coincidencias_prov = df_proveedores[
+                        df_proveedores["desc_proveedor"].isin(unique_beneficiarios)
+                    ]
+                    proveedor_valido = not coincidencias_prov.empty
+                    if proveedor_valido:
+                        datos_epam.update(
+                            coincidencias_prov[["cuit"]].iloc[0].to_dict()
+                        )
+                    else:
+                        # 1. Alerta rápida en la esquina
+                        st.toast("⚠️ Proveedor no encontrado", icon="👤")
 
-        #         # --- VALIDACIÓN DE OBRA ---
-        #         df_obras = get_obras(
-        #             update_trigger=st.session_state.get("obras_uploader_iteration", 0)
-        #         )
-        #         coincidencias_obra = df_obras[
-        #             df_obras["desc_obra"] == datos_obras["desc_obra"]
-        #         ]
-        #         obra_valida = not coincidencias_obra.empty
-        #         if obra_valida:
-        #             datos_obras.update(
-        #                 coincidencias_obra[
-        #                     ["actividad", "partida", "fuente", "cta_cte"]
-        #                 ]
-        #                 .iloc[0]
-        #                 .to_dict()
-        #             )
-        #         else:
-        #             # 1. Alerta rápida en la esquina
-        #             st.toast("⚠️ Obra no encontrada", icon="🏗️")
+                        # 2. Mensaje con acción en el cuerpo de la página
+                        with error_placeholder.container(
+                            horizontal=False,
+                            width="stretch",
+                            horizontal_alignment="center",
+                        ):
+                            st.error(
+                                f"El beneficiario '{unique_beneficiarios[0]}' no existe en la base de datos."
+                            )
+                            if st.page_link(
+                                "src/pages/proveedores.py",
+                                label="Ir a Actualizar Proveedores",
+                                icon="⚙️",
+                            ):
+                                pass
 
-        #             # 2. Mensaje con acción en el cuerpo de la página
-        #             with error_placeholder.container(
-        #                 horizontal=False,
-        #                 width="stretch",
-        #                 horizontal_alignment="center",
-        #             ):
-        #                 st.error(
-        #                     f"La obra '{datos_obras['desc_obra']}' no existe en la base de datos."
-        #                 )
-        #                 modal_obras(
-        #                     key_prefix=f"add_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        #                     datos_carga=datos_obras,
-        #                     es_edicion=False,
-        #                     es_autocarga=True,
-        #                 )
+                # --- VALIDACIÓN DE OBRA ---
+                df_obras = get_obras(
+                    update_trigger=st.session_state.get("obras_uploader_iteration", 0)
+                )
+                unique_obras = (
+                    df_epam.iloc[selected_indices]["desc_obra"].unique().tolist()
+                )
+                if len(unique_obras) > 1:
+                    obra_valida = False  # No podemos cargar si hay más de una obra diferente seleccionada
+                else:
+                    datos_epam["desc_obra"] = unique_obras[0]
+                    coincidencias_obra = df_obras[
+                        df_obras["desc_obra"].isin(unique_obras)
+                    ]
+                    obra_valida = not coincidencias_obra.empty
+                    if obra_valida:
+                        datos_epam.update(
+                            coincidencias_obra[
+                                ["actividad", "partida", "fuente", "cta_cte"]
+                            ]
+                            .iloc[0]
+                            .to_dict()
+                        )
+                    else:
+                        # 1. Alerta rápida en la esquina
+                        st.toast("⚠️ Obra no encontrada", icon="🏗️")
 
-        #         datos_obras["importe"] = float(datos_obras["importe_bruto"])
-        #         datos_obras["origen"] = "Obras"
-        #         # print(datos_obras)
-        #         if obra_valida and proveedor_valido:
-        #             modal_comprobante_gasto(
-        #                 key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        #                 datos_carga=datos_obras,
-        #             )
+                        # 2. Mensaje con acción en el cuerpo de la página
+                        with error_placeholder.container(
+                            horizontal=False,
+                            width="stretch",
+                            horizontal_alignment="center",
+                        ):
+                            st.error(
+                                f"La obra '{unique_obras[0]}' no existe en la base de datos."
+                            )
+                            modal_obras(
+                                key_prefix=f"add_obra_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                                datos_carga=datos_epam,
+                                es_edicion=False,
+                                es_autocarga=True,
+                            )
 
-        # if btn_edit:
-        #     pass
-        # if btn_del:
-        #     pass
+                datos_epam.update(
+                    df_epam.iloc[selected_indices][
+                        ["iibb", "gcias", "suss", "lp", "importe_bruto", "importe_neto"]
+                    ]
+                    .sum()
+                    .to_dict()
+                )
+                datos_epam["importe"] = float(datos_epam["importe_bruto"])
+                datos_epam["origen"] = "EPAM"
+                datos_epam["id"] = [df_epam.iloc[selected_indices]["id"].tolist()]
+
+                # print(datos_epam)
+                if obra_valida and proveedor_valido:
+                    modal_comprobante_gasto(
+                        key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                        datos_carga=datos_epam,
+                    )
+
+        if btn_edit:
+            pass
+        if btn_del:
+            pass
 
 
 if __name__ == "__main__":

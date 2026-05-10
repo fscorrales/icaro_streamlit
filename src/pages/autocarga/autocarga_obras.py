@@ -184,7 +184,6 @@ def render() -> None:
                             icon="⚙️",
                         ):
                             pass
-                        # st.stop()  # Detenemos la ejecución para que no abra el modal vacío
 
                 # --- VALIDACIÓN DE OBRA ---
                 df_obras = get_obras(

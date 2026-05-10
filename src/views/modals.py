@@ -377,17 +377,26 @@ def modal_comprobante_gasto(
                                         icon="⚠️",
                                     )
 
-                                payload = {"id_carga": id_carga}
+                                # Actualizamos la información de carga
+                                res_aut = False
                                 origen = str(form_data.get("origen")).lower()
                                 if origen == "obras":
+                                    payload = {"id_carga": id_carga}
                                     res_aut = patch_request(
                                         endpoint=Endpoints.ICARO_INFORME_CONTABLE.value
                                         + f"/update_id_carga/{str(form_data.get('id'))}",
                                         json_body=payload,
                                     )
-                                    # print(
-                                    #     f"Respuesta al actualizar id_carga en informe contable: {res_aut}"
-                                    # )
+                                if origen == "epam":
+                                    payload = {
+                                        "ids": form_data.get("id"),
+                                        "id_carga": id_carga,
+                                    }
+                                    res_aut = patch_request(
+                                        endpoint=Endpoints.ICARO_RESUMEN_REND_OBRAS.value
+                                        + "/update_id_carga}",
+                                        json_body=payload,
+                                    )
                                 if res_aut:
                                     st.toast(
                                         "✅ Información de carga actualizada con éxito",
