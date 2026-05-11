@@ -128,9 +128,15 @@ def render() -> None:
 
                 df_ret_tabla = pd.DataFrame(lista_ordenada)
 
-                df_ret_tabla["importe"] = df_ret_tabla["importe"].apply(
-                    formato_moneda_ar
-                )
+                if not df_ret_tabla.empty:
+                    # Si tiene datos, formateamos la columna importe
+                    df_ret_tabla["importe"] = df_ret_tabla["importe"].apply(
+                        formato_moneda_ar
+                    )
+                else:
+                    # Si está vacío, creamos un DataFrame con las columnas correctas
+                    # pero vacío para que Streamlit no rompa al renderizar
+                    df_ret_tabla = pd.DataFrame(columns=["codigo", "importe"])
 
                 # Creamos la tabla resumen de imputacion y totales
                 df_obras = get_obras(
@@ -246,6 +252,15 @@ def render() -> None:
                 )
                 if len(unique_obras) > 1:
                     obra_valida = False  # No podemos cargar si hay más de una obra diferente seleccionada
+                    st.toast("⚠️ Multiples imputaciones seleccionadas", icon="🏗️")
+                    with error_placeholder.container(
+                        horizontal=False,
+                        width="stretch",
+                        horizontal_alignment="center",
+                    ):
+                        st.error(
+                            f"No es posible agregar las obras '{unique_obras}' en el mismo comprobante."
+                        )
                 else:
                     datos_epam["desc_obra"] = unique_obras[0]
                     coincidencias_obra = df_obras[
@@ -289,7 +304,7 @@ def render() -> None:
                 )
                 datos_epam["importe"] = float(datos_epam["importe_bruto"])
                 datos_epam["origen"] = "EPAM"
-                datos_epam["id"] = [df_epam.iloc[selected_indices]["id"].tolist()]
+                datos_epam["id"] = df_epam.iloc[selected_indices]["id"].tolist()
 
                 # print(datos_epam)
                 if obra_valida and proveedor_valido:

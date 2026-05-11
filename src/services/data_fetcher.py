@@ -218,12 +218,12 @@ def get_autocarga_epam(
     df = fetch_dataframe(
         Endpoints.ICARO_RESUMEN_REND_OBRAS.value, params=params_peticion
     )
-    # if not df.empty:
-    #     df = df.loc[df["id_carga"] == ""]
-    #     df = df.sort_values(
-    #         ["beneficiario", "desc_obra", "nro_certificado"],
-    #         ascending=True,
-    #     )
+    if not df.empty:
+        df = df.loc[df["id_carga"] == ""]
+        df = df.sort_values(
+            ["desc_obra", "beneficiario", "libramiento"],
+            ascending=True,
+        )
 
     return df
 

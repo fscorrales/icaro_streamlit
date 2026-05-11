@@ -380,21 +380,21 @@ def modal_comprobante_gasto(
                                 # Actualizamos la información de carga
                                 res_aut = False
                                 origen = str(form_data.get("origen")).lower()
-                                if origen == "obras":
+                                if origen == "certificados":
                                     payload = {"id_carga": id_carga}
                                     res_aut = patch_request(
                                         endpoint=Endpoints.ICARO_INFORME_CONTABLE.value
                                         + f"/update_id_carga/{str(form_data.get('id'))}",
                                         json_body=payload,
                                     )
-                                if origen == "epam":
+                                else:
                                     payload = {
                                         "ids": form_data.get("id"),
                                         "id_carga": id_carga,
                                     }
                                     res_aut = patch_request(
                                         endpoint=Endpoints.ICARO_RESUMEN_REND_OBRAS.value
-                                        + "/update_id_carga}",
+                                        + "/update_id_carga",
                                         json_body=payload,
                                     )
                                 if res_aut:
@@ -403,7 +403,7 @@ def modal_comprobante_gasto(
                                         icon="✅",
                                     )
                                     st.session_state[
-                                        f"autocarga_{origen}_uploader_iteration"
+                                        f"autocarga_{'obras' if origen == 'certificados' else 'epam'}_uploader_iteration"
                                     ] += 1
                                 else:
                                     st.toast(
@@ -462,9 +462,9 @@ def modal_delete_gasto(
                         f"{Endpoints.ICARO_RETENCIONES.value}/delete_many/{id_carga_contable}"
                     )
                     # 3. Desvincular Informe Contable (Limpiar el campo id_carga)
-                    if origen.lower() == "obras":
+                    if origen != "":
                         res_desvinculo = patch_request(
-                            f"{Endpoints.ICARO_INFORME_CONTABLE.value}/unlink_by_carga/{id_carga_contable}"
+                            f"{Endpoints.ICARO_INFORME_CONTABLE.value if origen == 'certificados' else Endpoints.ICARO_RESUMEN_REND_OBRAS.value}/unlink_by_carga/{id_carga_contable}"
                         )
 
                     if res_carga and res_retenciones:
@@ -473,6 +473,7 @@ def modal_delete_gasto(
                         )
                         st.session_state["carga_dataframes_iteration"] += 1
                         if origen != "":
+                            origen = "obras" if origen == "certificados" else "epam"
                             if (
                                 f"autocarga_{origen}_uploader_iteration"
                                 not in st.session_state
@@ -518,7 +519,7 @@ def modal_obras(
         update_trigger=st.session_state.get("obras_uploader_iteration", 0)
     )
     lista_localidades = (
-        df_obras["localidad"].str.title().sort_values().unique().tolist()
+        df_obras["localidad"].str.upper().sort_values().unique().tolist()
     )
     lista_info_adicional = df_obras["info_adicional"].sort_values().unique().tolist()
 
