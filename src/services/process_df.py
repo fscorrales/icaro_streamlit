@@ -140,6 +140,7 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df.loc[df["desc_obra"] == "", "desc_obra"] = df["38"]
     df["desc_obra"] = df["desc_obra"].ffill()
     df = df.assign(
+        id_carga="",
         origen=df["origen"],
         desc_obra=df["desc_obra"],
         beneficiario=df["25"].where(df["55"] == "", df["36"]),
