@@ -136,7 +136,7 @@ def build_navigation() -> None:
             get_ctas_ctes(update_trigger=st.session_state.ctas_ctes_uploader_iteration)
 
             # Opcional: limpiar el caché de Streamlit para asegurar que no haya basura
-            # st.cache_data.clear()
+            st.cache_data.clear()
             st.toast("Sincronizando con el servidor...", icon="🚀")
             time.sleep(1)  # Simula un pequeño delay para que se vea el toast
 
