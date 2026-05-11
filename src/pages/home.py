@@ -23,7 +23,7 @@ from src.services import (
     fetch_excel_stream,
     get_data_carga,
 )
-from src.utils import APIConnectionError, APIResponseError
+from src.utils import APIConnectionError, APIResponseError, formato_moneda_ar
 from src.views import (
     dataframe_with_buttons,
     modal_comprobante_gasto,
@@ -257,6 +257,9 @@ def icaro_carga_template(
             with st.container(horizontal=True, border=False, width="stretch"):
                 df_ret_filtrado = df_ret[df_ret["id_carga"] == selected_id]
                 df_carga_filtrado = df_carga[df_carga["id_carga"] == selected_id]
+                df_carga_filtrado["importe"] = df_carga_filtrado["importe"].apply(
+                    formato_moneda_ar
+                )
                 dataframe_with_buttons(
                     df_carga_filtrado,
                     key=f"{key}_df_imp",
@@ -266,6 +269,9 @@ def icaro_carga_template(
                         "importe",
                     ],
                     show_buttons=False,
+                )
+                df_ret_filtrado["importe"] = df_ret_filtrado["importe"].apply(
+                    formato_moneda_ar
                 )
                 dataframe_with_buttons(
                     df_ret_filtrado,
