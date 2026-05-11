@@ -16,7 +16,12 @@ from src.services import (
     get_proveedores,
     process_certificados_obras,
 )
-from src.utils import APIConnectionError, APIResponseError, build_retenciones_payload
+from src.utils import (
+    APIConnectionError,
+    APIResponseError,
+    build_retenciones_payload,
+    formato_moneda_ar,
+)
 from src.views import (
     modal_comprobante_gasto,
     modal_obras,
@@ -115,6 +120,18 @@ def render() -> None:
                 # Ordenamos la lista de retenciones por el código (convertido a entero)
                 lista_ordenada = sorted(lista_ret, key=lambda x: int(x["codigo"]))
 
+                df_ret_tabla = pd.DataFrame(lista_ordenada)
+
+                if not df_ret_tabla.empty:
+                    # Si tiene datos, formateamos la columna importe
+                    df_ret_tabla["importe"] = df_ret_tabla["importe"].apply(
+                        formato_moneda_ar
+                    )
+                else:
+                    # Si está vacío, creamos un DataFrame con las columnas correctas
+                    # pero vacío para que Streamlit no rompa al renderizar
+                    df_ret_tabla = pd.DataFrame(columns=["codigo", "importe"])
+
                 df_obras = get_obras(
                     update_trigger=st.session_state.get("obras_uploader_iteration", 0)
                 )
@@ -126,9 +143,9 @@ def render() -> None:
                     fila = coincidencias[["actividad", "partida"]].iloc[0]
                     valor_imputacion = f"{fila['actividad']}-{fila['partida']}"
 
-                valor_importe_bruto = f"$ {datos_obras['importe_bruto']:,.2f}"
-                valor_retenciones = f"$ {datos_obras['retenciones']:,.2f}"
-                valor_importe_neto = f"$ {datos_obras['importe_neto']:,.2f}"
+                valor_importe_bruto = formato_moneda_ar(datos_obras["importe_bruto"])
+                valor_retenciones = formato_moneda_ar(datos_obras["retenciones"])
+                valor_importe_neto = formato_moneda_ar(datos_obras["importe_neto"])
 
                 # 4. Armamos el DataFrame vertical
                 df_imputacion = pd.DataFrame(
@@ -147,7 +164,7 @@ def render() -> None:
                         height=150,
                     )
                     dataframe(
-                        pd.DataFrame(lista_ordenada),
+                        df_ret_tabla,
                         key=f"autocarga_{REPORTE_OBRAS}_retenciones",
                         height=150,
                     )
