@@ -16,14 +16,14 @@ from src.views import (
     report_template_without_filters,
 )
 
-REPORTE = "programas"
+REPORTE = "subprogramas"
 
 
 # --------------------------------------------------
 def add_estructura():
     modal_estructura(
         key_prefix=f"add_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        len_estructura=2,
+        len_estructura=5,
     )
 
 
@@ -32,7 +32,7 @@ def edit_estructura(datos_edicion: dict):
     modal_estructura(
         key_prefix=f"edit_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}",
         datos_carga=datos_edicion,
-        len_estructura=2,
+        len_estructura=5,
         es_edicion=True,
     )
 
@@ -53,7 +53,7 @@ def render() -> None:
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
         df = get_estructuras(filtro_actual)
-        df = df[df["estructura"].str.len() == 2]
+        df = df[df["estructura"].str.len() == 5]
 
         if df.empty:
             st.info("No se encontraron resultados.")
@@ -70,7 +70,7 @@ def render() -> None:
     if not df.empty:
         dataframe_with_buttons(
             df,
-            key=f"{REPORTE}_df_programas",
+            key=f"{REPORTE}_df_subprogramas",
             height=300,
             column_order=["estructura", "desc_estructura"],
             selection_mode="single-row",

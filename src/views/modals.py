@@ -850,7 +850,31 @@ def modal_estructura(
     len_estructura: int = 11,
 ):
     # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
-    form_data = datos_carga if datos_carga else {}
+    form_data = {}
+    if datos_carga:
+        estructura_split = datos_carga["estructura"].split("-")
+        print(estructura_split)
+        form_data["programa"] = estructura_split[0]
+        if len(estructura_split) > 2:
+            form_data["subprograma"] = estructura_split[1]
+        if len(estructura_split) > 3:
+            form_data["proyecto"] = (
+                f"{estructura_split[0]}-{estructura_split[1]}-{estructura_split[2]}"
+            )
+        if len(estructura_split) > 4:
+            form_data["actividad"] = (
+                f"{estructura_split[0]}-{estructura_split[1]}-{estructura_split[2]}-{estructura_split[3]}"
+            )
+
+    if f"{key_prefix}_desc_programa" not in st.session_state:
+        st.session_state[f"{key_prefix}_desc_programa"] = form_data.get(
+            "desc_programa", ""
+        )
+
+    if f"{key_prefix}_desc_subprograma" not in st.session_state:
+        st.session_state[f"{key_prefix}_desc_subprograma"] = form_data.get(
+            "desc_programa", ""
+        )
 
     # Traemos los DATOS
     df_estructura = get_estructuras()
@@ -863,6 +887,28 @@ def modal_estructura(
         df_actividad = df_estructura[df_estructura["estructura"].str.len() == 11]
 
     # FILA 1: Programa + Desc Programa
+    def handle_programa_change():
+        prog_elegido = st.session_state.get(f"{key_prefix}_programa")
+        if prog_elegido:
+            # Buscamos la denominación en el DF
+            fila_prog = df_programa[df_programa.estructura == prog_elegido]
+            if not fila_prog.empty:
+                # Actualizamos el session_state del text_input directamente
+                nueva_desc = fila_prog["desc_estructura"].iloc[0]
+                st.session_state[f"{key_prefix}_desc_programa"] = nueva_desc
+            else:
+                # Si es una opción nueva (accept_new_options),
+                # podemos decidir si limpiar o dejar que el usuario escriba
+                st.session_state[f"{key_prefix}_desc_programa"] = ""
+        else:
+            st.session_state[f"{key_prefix}_desc_programa"] = ""
+
+        # IMPORTANTE: Resetear el subprograma al cambiar el programa
+        if f"{key_prefix}_subprograma" in st.session_state:
+            st.session_state[f"{key_prefix}_subprograma"] = None
+        if f"{key_prefix}_desc_subprograma" in st.session_state:
+            st.session_state[f"{key_prefix}_desc_subprograma"] = ""
+
     col1_1, col1_2 = st.columns([0.5, 3])
     lista_programas = df_programa.estructura.to_list()
     programa_prev = form_data.get("programa")
@@ -879,15 +925,45 @@ def modal_estructura(
         options=lista_programas,
         key=f"{key_prefix}_programa",
         help="Seleccione el programa de la base de datos.",
-        accept_new_options=True,
+        accept_new_options=(len_estructura == 2),
+        on_change=handle_programa_change,
     )
 
-    desc_programa = col1_2.text_input("Descripción Programa")
+    prog_actual = st.session_state.get(f"{key_prefix}_programa")
 
+    desc_programa = col1_2.text_input(
+        "Descripción Programa",
+        key=f"{key_prefix}_desc_programa",
+        placeholder="Agregar descripción del programa",
+        disabled=(len_estructura != 2),
+    )
+
+    # FILA 2: Subprograma + Desc Subprograma
     if len_estructura >= 5:
-        # FILA 2: Subprograma + Desc Subprograma
+
+        def handle_subprograma_change():
+            subprog_elegido = st.session_state.get(f"{key_prefix}_subprograma")
+            if subprog_elegido:
+                # Buscamos la denominación en el DF
+                fila_subprog = df_subprograma[
+                    df_subprograma.estructura == subprog_elegido
+                ]
+                if not fila_subprog.empty:
+                    # Actualizamos el session_state del text_input directamente
+                    nueva_desc = fila_subprog["desc_estructura"].iloc[0]
+                    st.session_state[f"{key_prefix}_desc_subprograma"] = nueva_desc
+                else:
+                    # Si es una opción nueva (accept_new_options),
+                    # podemos decidir si limpiar o dejar que el usuario escriba
+                    st.session_state[f"{key_prefix}_desc_subprograma"] = ""
+
         col2_1, col2_2 = st.columns([0.5, 3])
-        lista_subprogramas = df_subprograma.estructura.to_list()
+        prog_actual = st.session_state.get(f"{key_prefix}_programa")
+        if prog_actual:
+            mask = df_subprograma["estructura"].str.startswith(f"{prog_actual}-")
+            lista_subprogramas = df_subprograma[mask].estructura.to_list()
+        else:
+            lista_subprogramas = []
         subprograma_prev = form_data.get("subprograma")
         idx_subprograma = (
             lista_subprogramas.index(subprograma_prev)
@@ -896,16 +972,24 @@ def modal_estructura(
         )
 
         subprograma = col2_1.selectbox(
-            "Programa",
+            "Subprograma",
             index=idx_subprograma,
             placeholder="Subprog",
             options=lista_subprogramas,
             key=f"{key_prefix}_subprograma",
             help="Seleccione el subprograma de la base de datos.",
-            accept_new_options=True,
+            accept_new_options=(len_estructura == 5),
+            on_change=handle_subprograma_change,
+            disabled=not prog_actual,
+            format_func=lambda x: str(x)[-2:] if x else x,
         )
 
-        desc_subprograma = col2_2.text_input("Descripción Subprograma")
+        desc_subprograma = col2_2.text_input(
+            "Descripción Subprograma",
+            key=f"{key_prefix}_desc_subprograma",
+            placeholder="Agregar descripción del subprograma",
+            disabled=(len_estructura != 5 or not prog_actual),
+        )
 
     if len_estructura >= 8:
         # FILA 3: Proyecto + Desc Proyecto

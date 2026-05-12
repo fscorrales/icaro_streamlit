@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from src.pages.estructura import completo, programas
+from src.pages.estructura import completo, programas, subprogramas
 
 
 def main() -> None:
@@ -18,7 +18,7 @@ def main() -> None:
         programas.render()
 
     with tab_subprog:
-        pass
+        subprogramas.render()
 
     with tab_proy:
         pass
