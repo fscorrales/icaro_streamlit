@@ -2,6 +2,7 @@ __all__ = [
     "modal_comprobante_gasto",
     "modal_delete_gasto",
     "modal_obras",
+    "modal_estructura",
     "modal_delete_registro_gral",
 ]
 
@@ -838,3 +839,197 @@ def modal_delete_registro_gral(
 
                 except Exception as e:
                     st.error(f"Error al eliminar: {e}")
+
+
+# --- MODAL: AGREGAR ESTRUCTURA ---
+@st.dialog("Agregar / Editar Estructura", width="medium")
+def modal_estructura(
+    key_prefix: str,
+    datos_carga: dict = None,
+    es_edicion: bool = False,
+    len_estructura: int = 11,
+):
+    # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
+    form_data = datos_carga if datos_carga else {}
+
+    # Traemos los DATOS
+    df_estructura = get_estructuras()
+    df_programa = df_estructura[df_estructura["estructura"].str.len() == 2]
+    if len_estructura >= 5:
+        df_subprograma = df_estructura[df_estructura["estructura"].str.len() == 5]
+    if len_estructura >= 8:
+        df_proyecto = df_estructura[df_estructura["estructura"].str.len() == 8]
+    if len_estructura >= 11:
+        df_actividad = df_estructura[df_estructura["estructura"].str.len() == 11]
+
+    # FILA 1: Programa + Desc Programa
+    col1_1, col1_2 = st.columns([0.5, 3])
+    lista_programas = df_programa.estructura.to_list()
+    programa_prev = form_data.get("programa")
+    idx_programa = (
+        lista_programas.index(programa_prev)
+        if programa_prev in lista_programas
+        else None
+    )
+
+    programa = col1_1.selectbox(
+        "Programa",
+        index=idx_programa,
+        placeholder="Prog",
+        options=lista_programas,
+        key=f"{key_prefix}_programa",
+        help="Seleccione el programa de la base de datos.",
+        accept_new_options=True,
+    )
+
+    desc_programa = col1_2.text_input("Descripción Programa")
+
+    if len_estructura >= 5:
+        # FILA 2: Subprograma + Desc Subprograma
+        col2_1, col2_2 = st.columns([0.5, 3])
+        lista_subprogramas = df_subprograma.estructura.to_list()
+        subprograma_prev = form_data.get("subprograma")
+        idx_subprograma = (
+            lista_subprogramas.index(subprograma_prev)
+            if subprograma_prev in lista_subprogramas
+            else None
+        )
+
+        subprograma = col2_1.selectbox(
+            "Programa",
+            index=idx_subprograma,
+            placeholder="Subprog",
+            options=lista_subprogramas,
+            key=f"{key_prefix}_subprograma",
+            help="Seleccione el subprograma de la base de datos.",
+            accept_new_options=True,
+        )
+
+        desc_subprograma = col2_2.text_input("Descripción Subprograma")
+
+    if len_estructura >= 8:
+        # FILA 3: Proyecto + Desc Proyecto
+        col3_1, col3_2 = st.columns([0.5, 3])
+        lista_proyectos = df_proyecto.estructura.to_list()
+        proyecto_prev = form_data.get("proyecto")
+        idx_proyecto = (
+            lista_proyectos.index(proyecto_prev)
+            if proyecto_prev in lista_proyectos
+            else None
+        )
+
+        proyecto = col2_1.selectbox(
+            "Proyecto",
+            index=idx_proyecto,
+            placeholder="Proy",
+            options=lista_proyectos,
+            key=f"{key_prefix}_proyecto",
+            help="Seleccione el proyecto de la base de datos.",
+            accept_new_options=True,
+        )
+
+        desc_proyecto = col2_2.text_input("Descripción Proyecto")
+
+    if len_estructura >= 11:
+        # FILA 4: Actividad + Desc Actividad
+        col4_1, col4_2 = st.columns([0.5, 3])
+        lista_actividades = df_actividad.estructura.to_list()
+        actividad_prev = form_data.get("actividad")
+        idx_actividad = (
+            lista_actividades.index(actividad_prev)
+            if actividad_prev in lista_actividades
+            else None
+        )
+
+        actividad = col2_1.selectbox(
+            "Actividad",
+            index=idx_actividad,
+            placeholder="Act",
+            options=lista_actividades,
+            key=f"{key_prefix}_actividad",
+            help="Seleccione la actividad de la base de datos.",
+            accept_new_options=True,
+        )
+
+        desc_actividad = col2_2.text_input("Descripción Actividad")
+
+    # st.markdown("## ")  # Espaciado final
+
+    # FILA 7: BOTONES (Cancel, Agregar) Alineados a la Derecha
+    # En Streamlit, esto es lo más difícil sin usar CSS Sucio. Usamos columnas para empujar a la derecha.
+
+    with st.container(
+        horizontal=True, border=False, horizontal_alignment="center", gap="large"
+    ):
+        # Botón Cancelar (Alineado a la derecha del expander de error o confirmación)
+        if button_cancel("Cancelar", type="secondary", key=f"{key_prefix}_btn_cancel"):
+            st.rerun()  # Cierra el modal de forma segura
+
+        # Botón AGREGAR (Primary, Color Principal)
+        if button_submit(
+            "Editar" if es_edicion else "Agregar",
+            key=f"{key_prefix}_btn_add",
+        ):
+            # 1. Validación de Datos
+            errores = []
+            if not programa or programa == "":
+                errores.append("Debe seleccionar una Actividad.")
+
+            if errores:
+                for err in errores:
+                    st.toast(err, icon="⚠️")
+            else:
+                with st.spinner("Procesando y Guardando..."):
+                    # 2. Preparación del payload para el POST
+                    estructura = programa
+                    desc_estructura = desc_programa
+                    payload = {
+                        "estructura": estructura,
+                        "desc_estructura": desc_estructura,
+                        "updated_at": form_data.get(
+                            "updated_at", datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        ),
+                    }
+                    # print(
+                    #     "Payload a enviar a ICARO:", payload
+                    # )  # Debug: Ver el payload en la consola
+                    # 3. Llamada al POST_REQUEST (Usando tus funciones existentes)
+                    try:
+                        if es_edicion:
+                            id = str(form_data.get("id"))
+                            # print(f"ID para edición: {id}")  # Debug: Ver el ID en la consola
+                            res = put_request(
+                                endpoint=f"{Endpoints.ICARO_ESTRUCTURAS.value}/update_one/{id}",
+                                json_body=payload,
+                            )
+                        else:
+                            res = post_request(
+                                endpoint=Endpoints.ICARO_ESTRUCTURAS.value + "/add_one",
+                                json_body=payload,
+                            )
+
+                        # if res.status_code in [200, 201]:
+                        if res:
+                            # Feedback visual como vimos antes
+                            st.snow()
+                            st.toast(
+                                f"✅ La estructura {estructura} denominada {desc_estructura} {'agregada' if not es_edicion else 'editada'} con éxito",
+                                icon="📈",
+                            )
+
+                            # Guardamos un flag para el rerun final si es necesario
+                            st.session_state["estructura_uploader_iteration"] += 1
+                            # Usamos un pequeño delay para que disfrute los globos y el toast
+                            import time
+
+                            time.sleep(2)
+                            st.rerun()  # Esto cierra el modal y recarga la página principal
+                        # else:
+                        #     st.error(f"⚠️ Error de API ({res.status_code}): {res.text}")
+
+                    except (
+                        ex.AppBaseException
+                    ) as e:  # Captura cualquier error definido por ti
+                        st.error(f"❌ Error: {e}")
+                    except Exception as e:
+                        st.error(f"❌ Ocurrió un error inesperado. {e}")

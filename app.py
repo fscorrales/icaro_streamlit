@@ -91,7 +91,7 @@ def build_navigation() -> None:
     pages = [
         st.Page("src/pages/home.py", title="Home", icon="🏠"),
         st.Page("src/pages/autocarga/autocarga.py", title="Autocarga", icon="🔮"),
-        st.Page("src/pages/estructura.py", title="Estructura", icon="🏢"),
+        st.Page("src/pages/estructura/estructura.py", title="Estructura", icon="🏢"),
         st.Page("src/pages/obras.py", title="Obras", icon="🏘️"),
         st.Page(
             "src/pages/proveedores.py",
