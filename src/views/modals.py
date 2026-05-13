@@ -8,6 +8,7 @@ __all__ = [
 
 from datetime import date, datetime
 
+import pandas as pd
 import streamlit as st
 
 import src.utils.exceptions as ex
@@ -849,22 +850,64 @@ def modal_estructura(
     es_edicion: bool = False,
     len_estructura: int = 11,
 ):
+    # Traemos los DATOS
+    df_programa = df_subprograma = df_proyecto = df_actividad = pd.DataFrame()
+    df_estructura = get_estructuras()
+    longitudes = df_estructura["estructura"].str.len()
+    df_programa = df_estructura[longitudes == 2]
+    if len_estructura >= 5:
+        df_subprograma = df_estructura[longitudes == 5]
+    if len_estructura >= 8:
+        df_proyecto = df_estructura[longitudes == 8]
+    if len_estructura >= 11:
+        df_actividad = df_estructura[longitudes == 11]
+
     # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
     form_data = {}
     if datos_carga:
         estructura_split = datos_carga["estructura"].split("-")
-        print(estructura_split)
         form_data["programa"] = estructura_split[0]
+        match = df_programa.loc[
+            df_programa.estructura == form_data.get("programa"), "desc_estructura"
+        ]
+        if not match.empty:
+            form_data["desc_programa"] = match.values[0]
+        else:
+            form_data["desc_programa"] = "No encontrado"
+        if len(estructura_split) > 1:
+            form_data["subprograma"] = f"{estructura_split[0]}-{estructura_split[1]}"
+            match = df_subprograma.loc[
+                df_subprograma.estructura == form_data.get("subprograma"),
+                "desc_estructura",
+            ]
+            if not match.empty:
+                form_data["desc_subprograma"] = match.values[0]
+            else:
+                form_data["desc_subprograma"] = "No encontrado"
         if len(estructura_split) > 2:
-            form_data["subprograma"] = estructura_split[1]
-        if len(estructura_split) > 3:
             form_data["proyecto"] = (
                 f"{estructura_split[0]}-{estructura_split[1]}-{estructura_split[2]}"
             )
-        if len(estructura_split) > 4:
+            match = df_proyecto.loc[
+                df_proyecto.estructura == form_data.get("proyecto"),
+                "desc_estructura",
+            ]
+            if not match.empty:
+                form_data["desc_proyecto"] = match.values[0]
+            else:
+                form_data["desc_proyecto"] = "No encontrado"
+        if len(estructura_split) > 3:
             form_data["actividad"] = (
                 f"{estructura_split[0]}-{estructura_split[1]}-{estructura_split[2]}-{estructura_split[3]}"
             )
+            match = df_actividad.loc[
+                df_actividad.estructura == form_data.get("actividad"),
+                "desc_estructura",
+            ]
+            if not match.empty:
+                form_data["desc_actividad"] = match.values[0]
+            else:
+                form_data["desc_actividad"] = "No encontrado"
 
     if f"{key_prefix}_desc_programa" not in st.session_state:
         st.session_state[f"{key_prefix}_desc_programa"] = form_data.get(
@@ -873,18 +916,18 @@ def modal_estructura(
 
     if f"{key_prefix}_desc_subprograma" not in st.session_state:
         st.session_state[f"{key_prefix}_desc_subprograma"] = form_data.get(
-            "desc_programa", ""
+            "desc_subprograma", ""
         )
 
-    # Traemos los DATOS
-    df_estructura = get_estructuras()
-    df_programa = df_estructura[df_estructura["estructura"].str.len() == 2]
-    if len_estructura >= 5:
-        df_subprograma = df_estructura[df_estructura["estructura"].str.len() == 5]
-    if len_estructura >= 8:
-        df_proyecto = df_estructura[df_estructura["estructura"].str.len() == 8]
-    if len_estructura >= 11:
-        df_actividad = df_estructura[df_estructura["estructura"].str.len() == 11]
+    if f"{key_prefix}_desc_proyecto" not in st.session_state:
+        st.session_state[f"{key_prefix}_desc_proyecto"] = form_data.get(
+            "desc_proyecto", ""
+        )
+
+    if f"{key_prefix}_desc_actividad" not in st.session_state:
+        st.session_state[f"{key_prefix}_desc_actividad"] = form_data.get(
+            "desc_actividad", ""
+        )
 
     # FILA 1: Programa + Desc Programa
     def handle_programa_change():
