@@ -34,6 +34,7 @@ def edit_obra(datos_edicion: dict):
     )
 
 
+# --------------------------------------------------
 def delete_obra(datos_eliminar: dict):
     modal_delete_registro_gral(
         endpoint=f"{Endpoints.ICARO_OBRAS.value}/delete_one/{datos_eliminar['id']}",

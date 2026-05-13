@@ -12,6 +12,7 @@ from src.services.data_fetcher import get_estructuras
 from src.utils import APIConnectionError, APIResponseError
 from src.views import (
     dataframe_with_buttons,
+    modal_delete_registro_gral,
     modal_estructura,
     report_template_without_filters,
 )
@@ -22,7 +23,28 @@ REPORTE = "estructura"
 # --------------------------------------------------
 def add_estructura():
     modal_estructura(
-        key_prefix=f"add_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}"
+        key_prefix=f"add_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        len_estructura=11,
+    )
+
+
+# --------------------------------------------------
+def edit_estructura(datos_edicion: dict):
+    modal_estructura(
+        key_prefix=f"edit_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+        datos_carga=datos_edicion,
+        len_estructura=len(datos_edicion["estructura"]),
+        es_edicion=True,
+    )
+
+
+# --------------------------------------------------
+def delete_estructura(datos_eliminar: dict):
+    modal_delete_registro_gral(
+        endpoint=f"{Endpoints.ICARO_ESTRUCTURAS.value}/delete_one/{datos_eliminar['id']}",
+        desc_registro=f"con la estructura {datos_eliminar['estructura']} denominado {datos_eliminar['desc_estructura']}",
+        session_state_update_key="estructuras_uploader_iteration",
+        key_prefix=f"delete_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}",
     )
 
 
@@ -63,6 +85,8 @@ def render() -> None:
             column_order=["estructura", "desc_estructura"],
             selection_mode="single-row",
             add_func=add_estructura,
+            edit_func=edit_estructura,
+            delete_func=delete_estructura,
         )
 
 

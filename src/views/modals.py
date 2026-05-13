@@ -1099,7 +1099,7 @@ def modal_estructura(
             help="Seleccione el proyecto de la base de datos.",
             accept_new_options=(len_estructura == 8),
             on_change=handle_proyecto_change,
-            disabled=not subprog_actual,
+            disabled=not subprog_actual or (es_edicion and len_estructura > 8),
             format_func=lambda x: str(x)[-2:] if x else x,
         )
 
@@ -1111,9 +1111,29 @@ def modal_estructura(
         )
 
     if len_estructura >= 11:
+
+        def handle_actividad_change():
+            act_elegido = st.session_state.get(f"{key_prefix}_actividad")
+            if act_elegido:
+                # Buscamos la denominación en el DF
+                fila_act = df_actividad[df_actividad.estructura == act_elegido]
+                if not fila_act.empty:
+                    # Actualizamos el session_state del text_input directamente
+                    nueva_desc = fila_act["desc_estructura"].iloc[0]
+                    st.session_state[f"{key_prefix}_desc_actividad"] = nueva_desc
+                else:
+                    # Si es una opción nueva (accept_new_options),
+                    # podemos decidir si limpiar o dejar que el usuario escriba
+                    st.session_state[f"{key_prefix}_desc_actividad"] = ""
+
         # FILA 4: Actividad + Desc Actividad
         col4_1, col4_2 = st.columns([0.5, 3])
-        lista_actividades = df_actividad.estructura.to_list()
+        proy_actual = st.session_state.get(f"{key_prefix}_proyecto")
+        if proy_actual:
+            mask = df_actividad["estructura"].str.startswith(f"{proy_actual}-")
+            lista_actividades = df_actividad[mask].estructura.to_list()
+        else:
+            lista_actividades = []
         actividad_prev = form_data.get("actividad")
         idx_actividad = (
             lista_actividades.index(actividad_prev)
@@ -1128,12 +1148,20 @@ def modal_estructura(
             options=lista_actividades,
             key=f"{key_prefix}_actividad",
             help="Seleccione la actividad de la base de datos.",
-            accept_new_options=True,
+            accept_new_options=(len_estructura == 11),
+            on_change=handle_actividad_change,
+            disabled=not proy_actual,
+            format_func=lambda x: str(x)[-2:] if x else x,
         )
 
-        desc_actividad = col4_2.text_input("Descripción Actividad")
+        desc_actividad = col4_2.text_input(
+            "Descripción Actividad",
+            key=f"{key_prefix}_desc_actividad",
+            placeholder="Agregar descripción del actividad",
+            disabled=(len_estructura != 11 or not proy_actual),
+        )
 
-    # st.markdown("## ")  # Espaciado final
+    st.markdown("## ")  # Espaciado final
 
     # FILA 7: BOTONES (Cancel, Agregar) Alineados a la Derecha
     # En Streamlit, esto es lo más difícil sin usar CSS Sucio. Usamos columnas para empujar a la derecha.
@@ -1152,8 +1180,22 @@ def modal_estructura(
         ):
             # 1. Validación de Datos
             errores = []
-            if not programa or programa == "":
-                errores.append("Debe seleccionar una Actividad.")
+            if len_estructura >= 2 and (not programa or programa == ""):
+                errores.append("Debe seleccionar un Programa")
+            if len_estructura >= 2 and (not desc_programa or desc_programa == ""):
+                errores.append("El Programa seleccionado debe tener una descripción")
+            if len_estructura >= 5 and (not subprograma or subprograma == ""):
+                errores.append("Debe seleccionar un Subprograma")
+            if len_estructura >= 5 and (not desc_subprograma or desc_subprograma == ""):
+                errores.append("El Subprograma seleccionado debe tener una descripción")
+            if len_estructura >= 8 and (not proyecto or proyecto == ""):
+                errores.append("Debe seleccionar un Proyecto")
+            if len_estructura >= 8 and (not desc_proyecto or desc_proyecto == ""):
+                errores.append("El Proyecto seleccionado debe tener una descripción")
+            if len_estructura >= 11 and (not actividad or actividad == ""):
+                errores.append("Debe seleccionar un Actividad")
+            if len_estructura >= 11 and (not desc_actividad or desc_actividad == ""):
+                errores.append("La actividad seleccionado debe tener una descripción")
 
             if errores:
                 for err in errores:
@@ -1161,8 +1203,19 @@ def modal_estructura(
             else:
                 with st.spinner("Procesando y Guardando..."):
                     # 2. Preparación del payload para el POST
-                    estructura = programa
-                    desc_estructura = desc_programa
+                    if len_estructura == 2:
+                        estructura = programa
+                        desc_estructura = desc_programa
+                    if len_estructura == 5:
+                        estructura = f"{programa}-{subprograma[-2:]}"
+                        desc_estructura = desc_subprograma
+                    if len_estructura == 8:
+                        estructura = f"{subprograma}-{proyecto[-2:]}"
+                        desc_estructura = desc_proyecto
+                    if len_estructura == 11:
+                        estructura = f"{proyecto}-{actividad[-2:]}"
+                        desc_estructura = desc_actividad
+
                     payload = {
                         "estructura": estructura,
                         "desc_estructura": desc_estructura,
@@ -1198,7 +1251,7 @@ def modal_estructura(
                             )
 
                             # Guardamos un flag para el rerun final si es necesario
-                            st.session_state["estructura_uploader_iteration"] += 1
+                            st.session_state["estructuras_uploader_iteration"] += 1
                             # Usamos un pequeño delay para que disfrute los globos y el toast
                             import time
 
