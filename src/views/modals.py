@@ -946,11 +946,19 @@ def modal_estructura(
         else:
             st.session_state[f"{key_prefix}_desc_programa"] = ""
 
-        # IMPORTANTE: Resetear el subprograma al cambiar el programa
+        # IMPORTANTE: Resetear el todo al cambiar el programa
         if f"{key_prefix}_subprograma" in st.session_state:
             st.session_state[f"{key_prefix}_subprograma"] = None
         if f"{key_prefix}_desc_subprograma" in st.session_state:
             st.session_state[f"{key_prefix}_desc_subprograma"] = ""
+        if f"{key_prefix}_proyecto" in st.session_state:
+            st.session_state[f"{key_prefix}_proyecto"] = None
+        if f"{key_prefix}_desc_proyecto" in st.session_state:
+            st.session_state[f"{key_prefix}_desc_proyecto"] = ""
+        if f"{key_prefix}_actividad" in st.session_state:
+            st.session_state[f"{key_prefix}_actividad"] = None
+        if f"{key_prefix}_desc_actividad" in st.session_state:
+            st.session_state[f"{key_prefix}_desc_actividad"] = ""
 
     col1_1, col1_2 = st.columns([0.5, 3])
     lista_programas = df_programa.estructura.to_list()
@@ -970,6 +978,7 @@ def modal_estructura(
         help="Seleccione el programa de la base de datos.",
         accept_new_options=(len_estructura == 2),
         on_change=handle_programa_change,
+        disabled=(es_edicion and len_estructura > 2),
     )
 
     prog_actual = st.session_state.get(f"{key_prefix}_programa")
@@ -1000,6 +1009,16 @@ def modal_estructura(
                     # podemos decidir si limpiar o dejar que el usuario escriba
                     st.session_state[f"{key_prefix}_desc_subprograma"] = ""
 
+            # IMPORTANTE: Resetear el todo al cambiar el subprograma
+            if f"{key_prefix}_proyecto" in st.session_state:
+                st.session_state[f"{key_prefix}_proyecto"] = None
+            if f"{key_prefix}_desc_proyecto" in st.session_state:
+                st.session_state[f"{key_prefix}_desc_proyecto"] = ""
+            if f"{key_prefix}_actividad" in st.session_state:
+                st.session_state[f"{key_prefix}_actividad"] = None
+            if f"{key_prefix}_desc_actividad" in st.session_state:
+                st.session_state[f"{key_prefix}_desc_actividad"] = ""
+
         col2_1, col2_2 = st.columns([0.5, 3])
         prog_actual = st.session_state.get(f"{key_prefix}_programa")
         if prog_actual:
@@ -1023,7 +1042,7 @@ def modal_estructura(
             help="Seleccione el subprograma de la base de datos.",
             accept_new_options=(len_estructura == 5),
             on_change=handle_subprograma_change,
-            disabled=not prog_actual,
+            disabled=not prog_actual or (es_edicion and len_estructura > 5),
             format_func=lambda x: str(x)[-2:] if x else x,
         )
 
@@ -1035,9 +1054,35 @@ def modal_estructura(
         )
 
     if len_estructura >= 8:
+
+        def handle_proyecto_change():
+            proy_elegido = st.session_state.get(f"{key_prefix}_proyecto")
+            if proy_elegido:
+                # Buscamos la denominación en el DF
+                fila_proy = df_proyecto[df_proyecto.estructura == proy_elegido]
+                if not fila_proy.empty:
+                    # Actualizamos el session_state del text_input directamente
+                    nueva_desc = fila_proy["desc_estructura"].iloc[0]
+                    st.session_state[f"{key_prefix}_desc_proyecto"] = nueva_desc
+                else:
+                    # Si es una opción nueva (accept_new_options),
+                    # podemos decidir si limpiar o dejar que el usuario escriba
+                    st.session_state[f"{key_prefix}_desc_proyecto"] = ""
+
+            # IMPORTANTE: Resetear el todo al cambiar el subprograma
+            if f"{key_prefix}_actividad" in st.session_state:
+                st.session_state[f"{key_prefix}_actividad"] = None
+            if f"{key_prefix}_desc_actividad" in st.session_state:
+                st.session_state[f"{key_prefix}_desc_actividad"] = ""
+
         # FILA 3: Proyecto + Desc Proyecto
         col3_1, col3_2 = st.columns([0.5, 3])
-        lista_proyectos = df_proyecto.estructura.to_list()
+        subprog_actual = st.session_state.get(f"{key_prefix}_subprograma")
+        if subprog_actual:
+            mask = df_proyecto["estructura"].str.startswith(f"{subprog_actual}-")
+            lista_proyectos = df_proyecto[mask].estructura.to_list()
+        else:
+            lista_proyectos = []
         proyecto_prev = form_data.get("proyecto")
         idx_proyecto = (
             lista_proyectos.index(proyecto_prev)
@@ -1045,17 +1090,25 @@ def modal_estructura(
             else None
         )
 
-        proyecto = col2_1.selectbox(
+        proyecto = col3_1.selectbox(
             "Proyecto",
             index=idx_proyecto,
             placeholder="Proy",
             options=lista_proyectos,
             key=f"{key_prefix}_proyecto",
             help="Seleccione el proyecto de la base de datos.",
-            accept_new_options=True,
+            accept_new_options=(len_estructura == 8),
+            on_change=handle_proyecto_change,
+            disabled=not subprog_actual,
+            format_func=lambda x: str(x)[-2:] if x else x,
         )
 
-        desc_proyecto = col2_2.text_input("Descripción Proyecto")
+        desc_proyecto = col3_2.text_input(
+            "Descripción Proyecto",
+            key=f"{key_prefix}_desc_proyecto",
+            placeholder="Agregar descripción del proyecto",
+            disabled=(len_estructura != 8 or not subprog_actual),
+        )
 
     if len_estructura >= 11:
         # FILA 4: Actividad + Desc Actividad
@@ -1068,7 +1121,7 @@ def modal_estructura(
             else None
         )
 
-        actividad = col2_1.selectbox(
+        actividad = col4_1.selectbox(
             "Actividad",
             index=idx_actividad,
             placeholder="Act",
@@ -1078,7 +1131,7 @@ def modal_estructura(
             accept_new_options=True,
         )
 
-        desc_actividad = col2_2.text_input("Descripción Actividad")
+        desc_actividad = col4_2.text_input("Descripción Actividad")
 
     # st.markdown("## ")  # Espaciado final
 

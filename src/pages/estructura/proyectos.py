@@ -16,14 +16,14 @@ from src.views import (
     report_template_without_filters,
 )
 
-REPORTE = "subprogramas"
+REPORTE = "proyectos"
 
 
 # --------------------------------------------------
 def add_estructura():
     modal_estructura(
         key_prefix=f"add_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-        len_estructura=5,
+        len_estructura=8,
     )
 
 
@@ -32,7 +32,7 @@ def edit_estructura(datos_edicion: dict):
     modal_estructura(
         key_prefix=f"edit_estructura_{datetime.now().strftime('%Y%m%d%H%M%S')}",
         datos_carga=datos_edicion,
-        len_estructura=5,
+        len_estructura=8,
         es_edicion=True,
     )
 
@@ -42,7 +42,7 @@ def render() -> None:
     report_template_without_filters(
         key=REPORTE,
         title=REPORTE.capitalize(),
-        description="Subprogramas Presupuestarios del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
+        description="Proyectos Presupuestarios del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
         endpoint=Endpoints.ICARO_ESTRUCTURAS.value,
         has_export=True,
     )
@@ -53,7 +53,7 @@ def render() -> None:
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
         df = get_estructuras(filtro_actual)
-        df = df[df["estructura"].str.len() == 5]
+        df = df[df["estructura"].str.len() == 8]
 
         if df.empty:
             st.info("No se encontraron resultados.")
