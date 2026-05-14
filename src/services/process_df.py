@@ -217,7 +217,9 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
 
     # 1. Lógica previa para 'obra'
     titulo_reporte = str(df.iloc[0, 1])
-    if not titulo_reporte.startswith("Resumen de Certificaciones"):
+    if not titulo_reporte.startswith(
+        "Resumen de Certificaciones"
+    ) and not titulo_reporte.startswith("Devoluc. de Fondo de Reparo"):
         return pd.DataFrame()  # O manejar el error según tu flujo
     # 2. Uso de assign (Equivalente a mutate de R)
     mask_totales = (df["37"] == "TOTALES") | (df["48"] == "TOTALES")
@@ -245,6 +247,8 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     )
 
     df["beneficiario"] = df["beneficiario"].ffill()
+    if titulo_reporte.startswith("Devoluc. de Fondo de Reparo"):
+        df["fondo_reparo"] = df["importe_bruto"] * (-1)
 
     # 4. Conversión Numérica Robusta
     to_numeric_cols = [
