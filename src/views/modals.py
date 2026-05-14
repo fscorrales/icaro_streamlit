@@ -40,7 +40,9 @@ def modal_comprobante_gasto(
     df_obras = get_obras(
         update_trigger=st.session_state.get("obras_uploader_iteration", 0)
     )
-    df_ctas_ctes = get_ctas_ctes()
+    df_ctas_ctes = get_ctas_ctes(
+        update_trigger=st.session_state.ctas_ctes_uploader_iteration
+    )
     df_prov = get_proveedores(
         update_trigger=st.session_state.proveedores_uploader_iteration
     )
@@ -515,7 +517,9 @@ def modal_obras(
     form_data = datos_carga if datos_carga else {}
 
     # Traemos los DATOS
-    df_ctas_ctes = get_ctas_ctes()
+    df_ctas_ctes = get_ctas_ctes(
+        update_trigger=st.session_state.ctas_ctes_uploader_iteration
+    )
     df_prov = get_proveedores(
         update_trigger=st.session_state.proveedores_uploader_iteration
     )
