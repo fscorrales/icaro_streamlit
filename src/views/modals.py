@@ -676,6 +676,7 @@ def modal_obras(
         placeholder="Elegir una Localidad.",
         options=lista_localidades,
         key=f"{key_prefix}_localidad",
+        accept_new_options=True,
     )
 
     norma_legal = col5_2.text_input(
@@ -690,6 +691,7 @@ def modal_obras(
         placeholder="Elegir una Info Adicional.",
         options=lista_info_adicional,
         key=f"{key_prefix}_info_adicional",
+        accept_new_options=True,
     )
 
     # st.markdown("## ")  # Espaciado final
