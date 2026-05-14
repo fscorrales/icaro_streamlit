@@ -63,7 +63,10 @@ def render() -> None:
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
-        df_obras = get_estructuras(filtro_actual)
+        df_obras = get_estructuras(
+            filtro_actual,
+            update_trigger=st.session_state.estructuras_uploader_iteration,
+        )
 
         if df_obras.empty:
             st.info("No se encontraron resultados.")

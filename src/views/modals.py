@@ -515,7 +515,9 @@ def modal_obras(
     # Traemos los DATOS
     df_ctas_ctes = get_ctas_ctes()
     df_prov = get_proveedores()
-    df_actividades = get_estructuras()
+    df_actividades = get_estructuras(
+        update_trigger=st.session_state.estructuras_uploader_iteration
+    )
     df_actividades = df_actividades[df_actividades["estructura"].str.len() == 11]
     df_obras = get_obras(
         update_trigger=st.session_state.get("obras_uploader_iteration", 0)
@@ -854,7 +856,9 @@ def modal_estructura(
 ):
     # Traemos los DATOS
     df_programa = df_subprograma = df_proyecto = df_actividad = pd.DataFrame()
-    df_estructura = get_estructuras()
+    df_estructura = get_estructuras(
+        update_trigger=st.session_state.estructuras_uploader_iteration
+    )
     longitudes = df_estructura["estructura"].str.len()
     df_programa = df_estructura[longitudes == 2]
     if len_estructura >= 5:
@@ -867,6 +871,8 @@ def modal_estructura(
     # Si datos_carga existe, lo usamos. Si no, inicializamos vacío.
     form_data = {}
     if datos_carga:
+        form_data["id"] = datos_carga.get("id")
+        form_data["updated_at"] = datos_carga.get("updated_at")
         estructura_split = datos_carga["estructura"].split("-")
         form_data["programa"] = estructura_split[0]
         match = df_programa.loc[

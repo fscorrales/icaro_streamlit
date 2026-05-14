@@ -63,7 +63,10 @@ def render() -> None:
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
-        df = get_estructuras(filtro_actual)
+        df = get_estructuras(
+            filtro_actual,
+            update_trigger=st.session_state.estructuras_uploader_iteration,
+        )
         df = df[df["estructura"].str.len() == 5]
 
         if df.empty:
