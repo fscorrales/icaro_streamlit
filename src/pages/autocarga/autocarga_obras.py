@@ -175,7 +175,9 @@ def render() -> None:
                 datos_obras = df_certificados.iloc[selected_row_index].to_dict()
 
                 # --- VALIDACIÓN DE PROVEEDOR ---
-                df_proveedores = get_proveedores()
+                df_proveedores = get_proveedores(
+                    update_trigger=st.session_state.proveedores_uploader_iteration
+                )
                 coincidencias_prov = df_proveedores[
                     df_proveedores["desc_proveedor"] == datos_obras["beneficiario"]
                 ]

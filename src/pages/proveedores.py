@@ -30,7 +30,10 @@ def render() -> None:
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
-        df_proveedores = get_proveedores(filtro_actual)
+        df_proveedores = get_proveedores(
+            filtro_actual,
+            update_trigger=st.session_state.proveedores_uploader_iteration,
+        )
 
         if df_proveedores.empty:
             st.info("No se encontraron resultados.")

@@ -41,7 +41,9 @@ def modal_comprobante_gasto(
         update_trigger=st.session_state.get("obras_uploader_iteration", 0)
     )
     df_ctas_ctes = get_ctas_ctes()
-    df_prov = get_proveedores()
+    df_prov = get_proveedores(
+        update_trigger=st.session_state.proveedores_uploader_iteration
+    )
 
     # Inicializamos el índice de cta_cte en el state si no existe
     if f"{key_prefix}_cuenta_index" not in st.session_state:
@@ -514,7 +516,9 @@ def modal_obras(
 
     # Traemos los DATOS
     df_ctas_ctes = get_ctas_ctes()
-    df_prov = get_proveedores()
+    df_prov = get_proveedores(
+        update_trigger=st.session_state.proveedores_uploader_iteration
+    )
     df_actividades = get_estructuras(
         update_trigger=st.session_state.estructuras_uploader_iteration
     )
