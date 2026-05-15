@@ -227,7 +227,8 @@ def report_template_without_filters(
                 type=["csv"],
                 key=f"{key}_upload_file_{st.session_state[f'{key}_uploader_iteration']}",
                 label_visibility="collapsed",
-                disabled=not has_upload,  # Add this line to disable the uploader if has_upload is False
+                disabled=not has_upload,  # Add this line to disable the uploader if has_upload is False´
+                accept_multiple_files=False,
             )
             if has_upload
             else None
