@@ -7,11 +7,6 @@ import typer
 
 # --------------------------------------------------
 def get_version():
-    # Buscamos el pyproject en la raíz (ajusta la ruta según tu estructura)
-    # path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
-    # with open(path, "rb") as f:
-    #     data = tomllib.load(f)
-    #     return data["tool"]["poetry"]["version"]
     # Si la app está empaquetada, PyInstaller define _MEIPASS
     if getattr(sys, "frozen", False):
         base_path = Path(sys._MEIPASS)

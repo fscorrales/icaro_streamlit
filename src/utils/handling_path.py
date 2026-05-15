@@ -20,6 +20,7 @@ __all__ = [
 
 import inspect
 import os
+import sys
 
 
 # --------------------------------------------------
@@ -37,8 +38,19 @@ def get_src_path():
 
 # --------------------------------------------------
 def get_app_path():
-    dir_path = os.path.dirname(get_src_path())
-    return dir_path
+    # dir_path = os.path.dirname(get_src_path())
+    # return dir_path
+    # Detectamos si estamos ejecutando desde un .exe de PyInstaller
+    if getattr(sys, "frozen", False):
+        # Estamos en el .exe: la ruta base es donde está el archivo ejecutable
+        return os.path.dirname(sys.executable)
+    else:
+        # Estamos en modo desarrollo (Python): subimos niveles desde este archivo
+        # (Equivale a tu lógica anterior de subir desde utils/src)
+        dir_actual = os.path.dirname(os.path.abspath(__file__))
+        # Ajusta la cantidad de .dirname según qué tan profundo esté este script
+        # Si este script está en src/utils/path_helper.py, subirías 2 veces:
+        return os.path.dirname(os.path.dirname(dir_actual))
 
 
 # --------------------------------------------------
