@@ -1,3 +1,4 @@
+import sys
 import tomllib  # Disponible en Python 3.11+
 from pathlib import Path
 
@@ -7,10 +8,24 @@ import typer
 # --------------------------------------------------
 def get_version():
     # Buscamos el pyproject en la raíz (ajusta la ruta según tu estructura)
-    path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
-    with open(path, "rb") as f:
-        data = tomllib.load(f)
-        return data["tool"]["poetry"]["version"]
+    # path = Path(__file__).resolve().parent.parent.parent / "pyproject.toml"
+    # with open(path, "rb") as f:
+    #     data = tomllib.load(f)
+    #     return data["tool"]["poetry"]["version"]
+    # Si la app está empaquetada, PyInstaller define _MEIPASS
+    if getattr(sys, "frozen", False):
+        base_path = Path(sys._MEIPASS)
+    else:
+        base_path = Path(__file__).resolve().parent.parent.parent
+
+    path = base_path / "pyproject.toml"
+
+    try:
+        with open(path, "rb") as f:
+            data = tomllib.load(f)
+            return data["tool"]["poetry"]["version"]
+    except FileNotFoundError:
+        return "0.0.0-desconocida"
 
 
 # except:

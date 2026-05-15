@@ -29,12 +29,14 @@ def build():
         "--collect-all=streamlit",
         "--collect-all=httpx",
         "--collect-all=pydantic_settings",
+        "--collect-all=typer",
         # "--collect-all=playwright",
         "--copy-metadata=streamlit",
         # "--copy-metadata=playwright",
         # Inclusión de archivos y carpetas
         f"--add-data={STREAMLIT_APP}{os.pathsep}.",
         f"--add-data={SRC_DIR}{os.pathsep}{SRC_DIR}",
+        f"--add-data=pyproject.toml{os.pathsep}.",
         f"--icon={ICON_FILE}",
     ]
 
