@@ -101,7 +101,7 @@ def report_template(
                 f"Cargar CSV de {title}",
                 type=["csv"],
                 key=f"{key}_upload_file_{st.session_state[f'{key}_uploader_iteration']}",
-                label_visibility="collapsed",
+                label_visibility="visible",
                 disabled=not has_upload,  # Add this line to disable the uploader if has_upload is False´
                 accept_multiple_files=False,
                 help=uploader_help,

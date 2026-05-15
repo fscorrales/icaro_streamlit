@@ -30,6 +30,16 @@ from src.views import (
 
 REPORTE_OBRAS = "obras"
 
+ayuda_uploader = """
+### 📥 Guía de Importación
+1. Ingrese al **SGF**, y seleccione el menú **Informes / Certificados de Obra / Informe para Contable [Certificados]** o **Informes / Certificados de Obra / Informe para Contable [Fondo Reparo]** 
+2. Seleccione **Mes** y **Año**
+3. Presione el botón **Exportar**
+4. En la ventana emergente, mantenga la opción **Archivo...** antes de presionar aceptar
+5. Elija el destino del archivo a descargar y preste atención a que el tipo sea **.csv**
+6. **Importar** el archivo descargado previamente
+"""
+
 
 # --------------------------------------------------
 def render() -> None:
@@ -42,6 +52,7 @@ def render() -> None:
         has_export=True,
         has_upload=True,
         process_func=process_certificados_obras,
+        uploader_help=ayuda_uploader,
     )
 
     # 2. Capturamos el filtro del session_state (que el fragmento actualizó)

@@ -14,6 +14,15 @@ from src.views import dataframe_with_buttons, report_template
 
 REPORTE = "proveedores"
 
+ayuda_uploader = """
+### 📥 Guía de Importación
+1. Ingrese al **SGF**, y seleccione el menú **Archivo / Proveedores / Listado de Proveedores**
+2. Presione el botón **Exportar**
+3. En la ventana emergente, mantenga la opción **Archivo...** antes de presionar aceptar
+4. Elija el destino del archivo a descargar y preste atención a que el tipo sea **.csv**
+5. **Importar** el archivo descargado previamente
+"""
+
 
 # --------------------------------------------------
 def render() -> None:
@@ -23,6 +32,7 @@ def render() -> None:
         description="Proveedores del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
         endpoint=Endpoints.ICARO_PROVEEDORES.value,
         has_export=True,
+        uploader_help=ayuda_uploader,
     )
 
     # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
