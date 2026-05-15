@@ -47,7 +47,7 @@ def render() -> None:
     report_template(
         key=f"autocarga_{REPORTE_OBRAS}",
         title=REPORTE_OBRAS.capitalize(),
-        description="Obras del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
+        description="Sistema semiautomático de carga de Cerficados y Fondos de Reparo del INVICO. Utiliza el 'upload' para actualizar la base de datos. Utiliza el filtro avanzado para realizar consultas específicas.",
         endpoint=Endpoints.ICARO_INFORME_CONTABLE.value,
         has_export=True,
         has_upload=True,

@@ -133,7 +133,7 @@ def render() -> None:
     icaro_carga_template(
         key=REPORTE,
         title=REPORTE.capitalize(),
-        description="Bienvenido a ICARO, el sistema de control de ejecución presupuestaria de obras del INVICO. Utiliza los filtros para seleccionar los ejercicios que deseas consultar.",
+        description="Bienvenido a ICARO, el sistema de control de ejecución presupuestaria de obras del INVICO. Utiliza los filtros para seleccionar los ejercicios que deseas consultar o utiliza el filtro avanzado para consultas más específicas",
         filters_config=mis_filtros,
     )
 

@@ -47,7 +47,7 @@ def render() -> None:
     report_template(
         key=f"autocarga_{REPORTE_EPAM}",
         title=REPORTE_EPAM.capitalize(),
-        description="Resumen de Rendiciones de Obras EPAM. Utiliza el filtro avanzado para realizar consultas específicas.",
+        description="Sistema semiautomático de carga de Resumen de Rendiciones de Obras EPAM. Utiliza el 'upload' para actualizar la base de datos. Utiliza el filtro avanzado para realizar consultas específicas.",
         endpoint=Endpoints.ICARO_RESUMEN_REND_OBRAS.value,
         has_export=True,
         has_upload=True,

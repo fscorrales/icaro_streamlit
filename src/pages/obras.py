@@ -49,7 +49,7 @@ def render() -> None:
     report_template(
         key=REPORTE,
         title=REPORTE.capitalize(),
-        description="Obras del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
+        description="Listado de Obras integradas dentro de las Actividades / Obras presupuestarias del SIIF actuando como nexo entre este último y el Sistema de Gestión Financiera del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
         endpoint=Endpoints.ICARO_OBRAS.value,
         has_export=True,
     )
