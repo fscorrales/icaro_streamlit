@@ -25,7 +25,7 @@ from src.utils import (
 from src.views import (
     modal_comprobante_gasto,
     modal_obras,
-    report_template_without_filters,
+    report_template,
 )
 
 REPORTE_OBRAS = "obras"
@@ -34,7 +34,7 @@ REPORTE_OBRAS = "obras"
 # --------------------------------------------------
 def render() -> None:
 
-    report_template_without_filters(
+    report_template(
         key=f"autocarga_{REPORTE_OBRAS}",
         title=REPORTE_OBRAS.capitalize(),
         description="Obras del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",

@@ -14,7 +14,7 @@ from src.views import (
     dataframe_with_buttons,
     modal_delete_registro_gral,
     modal_estructura,
-    report_template_without_filters,
+    report_template,
 )
 
 REPORTE = "proyectos"
@@ -50,7 +50,7 @@ def delete_estructura(datos_eliminar: dict):
 
 # --------------------------------------------------
 def render() -> None:
-    report_template_without_filters(
+    report_template(
         key=REPORTE,
         title=REPORTE.capitalize(),
         description="Proyectos Presupuestarios del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",

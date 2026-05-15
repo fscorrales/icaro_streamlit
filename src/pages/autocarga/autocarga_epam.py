@@ -25,7 +25,7 @@ from src.utils import (
 from src.views import (
     modal_comprobante_gasto,
     modal_obras,
-    report_template_without_filters,
+    report_template,
 )
 
 REPORTE_EPAM = "epam"
@@ -34,7 +34,7 @@ REPORTE_EPAM = "epam"
 # --------------------------------------------------
 def render() -> None:
 
-    report_template_without_filters(
+    report_template(
         key=f"autocarga_{REPORTE_EPAM}",
         title=REPORTE_EPAM.capitalize(),
         description="Resumen de Rendiciones de Obras EPAM. Utiliza el filtro avanzado para realizar consultas específicas.",

@@ -10,14 +10,14 @@ from src.services import (
     get_proveedores,
 )
 from src.utils import APIConnectionError, APIResponseError
-from src.views import dataframe_with_buttons, report_template_without_filters
+from src.views import dataframe_with_buttons, report_template
 
 REPORTE = "proveedores"
 
 
 # --------------------------------------------------
 def render() -> None:
-    report_template_without_filters(
+    report_template(
         key=REPORTE,
         title=REPORTE.capitalize(),
         description="Proveedores del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
