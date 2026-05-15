@@ -53,7 +53,7 @@ def report_template(
     description: str,
     has_export: bool = True,
     has_upload: bool = False,
-    process_func=None,
+    uploader_func=None,
     uploader_help=None,
 ):
     """
@@ -129,8 +129,8 @@ def report_template(
 
     if uploaded_file:
         df = read_csv_file(uploaded_file)
-        if process_func:
-            df = process_func(df)
+        if uploader_func:
+            df = uploader_func(df)
         # Validación Visual (El "seguro" del usuario)
         col1, col2, col3 = st.columns(3)
         col1.metric("Filas a procesar", len(df))

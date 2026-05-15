@@ -8,6 +8,7 @@ import streamlit as st
 from src.constants import Endpoints
 from src.services import (
     get_proveedores,
+    process_listado_proveedores,
 )
 from src.utils import APIConnectionError, APIResponseError
 from src.views import dataframe_with_buttons, report_template
@@ -32,7 +33,9 @@ def render() -> None:
         description="Proveedores del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
         endpoint=Endpoints.ICARO_PROVEEDORES.value,
         has_export=True,
+        has_upload=True,
         uploader_help=ayuda_uploader,
+        uploader_func=process_listado_proveedores,
     )
 
     # 2. Capturamos el filtro del session_state (que el fragmento actualizó)

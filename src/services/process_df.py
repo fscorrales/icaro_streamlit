@@ -2,6 +2,7 @@ __all__ = [
     "process_resumen_rend_obras",
     "process_resumen_rend_prov",
     "process_certificados_obras",
+    "process_listado_proveedores",
 ]
 
 import numpy as np
@@ -212,6 +213,7 @@ def process_resumen_rend_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+# --------------------------------------------------
 def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = dataframe.copy()
 
@@ -295,6 +297,50 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
             "retenciones",
             "importe_neto",
             "id_carga",
+        ],
+    ]
+
+    return df
+
+
+# --------------------------------------------------
+def process_listado_proveedores(dataframe: pd.DataFrame) -> pd.DataFrame:
+    df = dataframe.copy()
+
+    titulo_reporte = str(df.iloc[0, 1])
+    if not titulo_reporte.startswith("Listado de Proveedores"):
+        return pd.DataFrame()
+
+    df = df.assign(
+        cuit=df["14"],
+        codigo=df["9"],
+        desc_proveedor=df["10"],
+        domicilio=df["11"],
+        localidad=df["12"],
+        condicion_iva=df["15"],
+    )
+
+    df["cuit"] = (
+        df["cuit"]
+        .astype(str)
+        .str.replace("-", "", regex=False)
+        .str.replace(".", "", regex=False)
+        .str.strip()
+    )
+
+    df = df[df["cuit"].notna() & (df["cuit"] != "")]
+
+    df["codigo"] = df["codigo"].astype(str)
+
+    df = df.loc[
+        :,
+        [
+            "cuit",
+            "codigo",
+            "desc_proveedor",
+            "domicilio",
+            "localidad",
+            "condicion_iva",
         ],
     ]
 

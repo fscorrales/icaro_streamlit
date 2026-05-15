@@ -51,7 +51,7 @@ def render() -> None:
         endpoint=Endpoints.ICARO_INFORME_CONTABLE.value,
         has_export=True,
         has_upload=True,
-        process_func=process_certificados_obras,
+        uploader_func=process_certificados_obras,
         uploader_help=ayuda_uploader,
     )
 
