@@ -51,7 +51,7 @@ def _get_headers(token: Optional[str] = None) -> dict[str, str]:
     if not st_token:
         # Nota: En lugar de error, podrías redirigir a login
         raise APIConnectionError("No hay token de sesión. Inicie sesión nuevamente.")
-    return {"Authorization": f"Bearer {token}"}
+    return {"Authorization": f"Bearer {st_token}"}
 
 
 # --------------------------------------------------

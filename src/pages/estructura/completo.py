@@ -5,6 +5,7 @@ Purpose: ICARO's Estructura Page
 
 from datetime import datetime
 
+import pandas as pd
 import streamlit as st
 
 from src.constants import Endpoints
@@ -62,6 +63,7 @@ def render() -> None:
     filtro_actual = st.session_state.get(f"{REPORTE}_advanced_filter", "")
 
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
+    df_obras = pd.DataFrame()
     try:
         df_obras = get_estructuras(
             filtro_actual,

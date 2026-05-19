@@ -221,6 +221,9 @@ def icaro_carga_template(
         )
         return
 
+    df_carga = pd.DataFrame()
+    df_ret = pd.DataFrame()
+
     # 3. Lógica de Fetch Iterativo (El equivalente al v-for de Vue + API calls)
     try:
         if "carga_dataframes_iteration" not in st.session_state:

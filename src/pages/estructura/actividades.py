@@ -5,6 +5,7 @@ Purpose: ICARO's Programas Page
 
 from datetime import datetime
 
+import pandas as pd
 import streamlit as st
 
 from src.constants import Endpoints
@@ -61,17 +62,16 @@ def render() -> None:
     # 2. Capturamos el filtro del session_state (que el fragmento actualizó)
     filtro_actual = st.session_state.get(f"{REPORTE}_advanced_filter", "")
 
+    df = pd.DataFrame()
     # 3. Ejecutamos la lógica que necesitemos (ahora sí es reutilizable)
     try:
         df = get_estructuras(
             filtro_actual,
             update_trigger=st.session_state.estructuras_uploader_iteration,
         )
-        df = df[df["estructura"].str.len() == 11]
 
         if df.empty:
             st.info("No se encontraron resultados.")
-        # else:
         #     st.session_state[f"data_{key}_carga"] = df_final
         #     st.session_state[f"data_{key}_retenciones"] = df_final_ret
 
@@ -82,6 +82,7 @@ def render() -> None:
 
     # 4. Mostrar resultados (usando session_state para que no desaparezcan)
     if not df.empty:
+        df = df[df["estructura"].str.len() == 11]
         dataframe_with_buttons(
             df,
             key=f"{REPORTE}_df_subprogramas",
