@@ -54,6 +54,13 @@ def get_resource_path(relative_path):
 
 
 def run_streamlit_app():
+    # --- TRUCO PARA EL CONFIG.TOML ---
+    # Si detectamos que estamos en el entorno compilado de PyInstaller,
+    # forzamos a Streamlit a leer la carpeta de configuración interna.
+    if hasattr(sys, "_MEIPASS"):
+        prod_config_dir = get_resource_path(".streamlit")
+        os.environ["STREAMLIT_CONFIG_DIR"] = prod_config_dir
+    # ----------------------------------
     # Buscamos app.py dentro de la carpeta temporal del ejecutable
     app_path = get_resource_path("app.py")
 
