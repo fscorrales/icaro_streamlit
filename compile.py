@@ -9,7 +9,7 @@ ENTRY_POINT = "run.py"  # El script lanzador
 STREAMLIT_APP = "app.py"  # Tu app principal
 SRC_DIR = "src"  # Carpeta con tu lógica y .env
 STREAMLIT_CONFIG = ".streamlit"
-ICON_FILE = "icaro_logo.ico"  # El archivo de icono de la app
+ICON_FILE = "wings_logo.ico"  # El archivo de icono de la app
 
 
 def build():
