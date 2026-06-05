@@ -30,7 +30,7 @@ def render() -> None:
     report_template(
         key=REPORTE,
         title=REPORTE.capitalize(),
-        description="Proveedores del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
+        description="",
         endpoint=Endpoints.ICARO_PROVEEDORES.value,
         has_export=True,
         has_upload=True,

@@ -54,7 +54,7 @@ def render() -> None:
     report_template(
         key=REPORTE,
         title=REPORTE.capitalize(),
-        description="Estructura Presupuestaria del INVICO. Utiliza el filtro avanzado para realizar consultas específicas.",
+        description="",
         endpoint=Endpoints.ICARO_ESTRUCTURAS.value,
         has_export=True,
     )
