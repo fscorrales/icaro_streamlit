@@ -145,7 +145,7 @@ def build_navigation() -> None:
         # Generamos espacio en blanco dinámico
         # Si tienes 6 páginas, unos 12 a 15 st.write("") suelen bastar
         # para mandarlo al fondo en una pantalla estándar.
-        for _ in range(15):
+        for _ in range(10):
             st.write("")
 
         st.divider()
