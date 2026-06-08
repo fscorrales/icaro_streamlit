@@ -158,7 +158,7 @@ def render() -> None:
         if event is not None:
             if len(event.selection.rows) > 0:
                 selected_row_index = event.selection.rows[0]
-                datos_obras = df_certificados.iloc[selected_row_index].to_dict()
+                datos_obras = df_filtrado.iloc[selected_row_index].to_dict()
                 payload_retenciones = build_retenciones_payload(datos_obras)
 
                 # Extraemos los datos crudos
@@ -219,7 +219,7 @@ def render() -> None:
         if btn_add:
             if len(event.selection.rows) > 0:
                 selected_row_index = event.selection.rows[0]
-                datos_obras = df_certificados.iloc[selected_row_index].to_dict()
+                datos_obras = df_filtrado.iloc[selected_row_index].to_dict()
 
                 # --- VALIDACIÓN DE PROVEEDOR ---
                 df_proveedores = get_proveedores(
