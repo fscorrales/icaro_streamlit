@@ -386,7 +386,7 @@ def modal_comprobante_gasto(
                                 # Actualizamos la información de carga
                                 res_aut = False
                                 origen = str(form_data.get("origen")).lower()
-                                if origen == "certificados":
+                                if origen == "certificados" or origen == "obras":
                                     payload = {"id_carga": id_carga}
                                     res_aut = patch_request(
                                         endpoint=Endpoints.ICARO_INFORME_CONTABLE.value

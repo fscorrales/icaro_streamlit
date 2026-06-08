@@ -43,8 +43,59 @@ def dataframe_home_carga(
         border=True,
         width="stretch",
     ):
+        # 1. Creamos una fila de inputs usando columnas (podés elegir cuáles indexar)
+        df_filtrado = df_carga.copy()
+        col1, col2, col3, col4 = st.columns(4)
+
+        with col1:
+            f_cuit = st.text_input(
+                "CUIT",
+                placeholder="Ej: MECAR",
+                key=f"f_cuit_{REPORTE}",
+            )
+        with col2:
+            f_desc_obra = st.text_input(
+                "Descripción Obra",
+                placeholder="Ej: Museo",
+                key=f"f_desc_obra_{REPORTE}",
+            )
+        with col3:
+            nro_certificado = st.text_input(
+                "Nro Certificado",
+                placeholder="Ej: 11",
+                key=f"nro_certificado_{REPORTE}",
+            )
+        with col4:
+            f_importe_min = st.number_input(
+                "Importe Bruto Mínimo",
+                min_value=0.0,
+                value=0.0,
+                step=10000.0,
+                key=f"f_importe_min_{REPORTE}",
+            )
+
+        # 2. Aplicamos los filtros en cascada sobre el DataFrame (Frontend Puro)
+        if f_cuit:
+            df_filtrado = df_filtrado[
+                df_filtrado["cuit"].astype(str).str.contains(f_cuit, case=False)
+            ]
+        if f_desc_obra:
+            df_filtrado = df_filtrado[
+                df_filtrado["desc_obra"]
+                .astype(str)
+                .str.contains(f_desc_obra, case=False)
+            ]
+        if nro_certificado:
+            df_filtrado = df_filtrado[
+                df_filtrado["nro_certificado"]
+                .astype(str)
+                .str.contains(nro_certificado, case=False)
+            ]
+        if f_importe_min:
+            df_filtrado = df_filtrado[df_filtrado["importe"] >= f_importe_min]
+
         event = dataframe(
-            df_carga,
+            df_filtrado,
             key=f"df_carga_{key}",
             height=height,
             on_select="rerun",
@@ -96,7 +147,8 @@ def dataframe_home_carga(
             if button_edit("Editar", key=f"btn_edit_{key}"):
                 if len(event.selection.rows) > 0:
                     selected_row_index = event.selection.rows[0]
-                    datos_edicion = df_carga.iloc[selected_row_index].to_dict()
+                    datos_edicion = df_filtrado.iloc[selected_row_index].to_dict()
+                    print(datos_edicion)
                     modal_comprobante_gasto(
                         key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                         datos_carga=datos_edicion,
@@ -105,7 +157,7 @@ def dataframe_home_carga(
             if button_delete("Borrar", key=f"btn_delete_{key}"):
                 if len(event.selection.rows) > 0:
                     selected_row_index = event.selection.rows[0]
-                    form_data = df_carga.iloc[selected_row_index].to_dict()
+                    form_data = df_filtrado.iloc[selected_row_index].to_dict()
                     # Disparamos el modal de confirmación
                     modal_delete_gasto(
                         id_mongo=str(form_data.get("id")),
@@ -114,7 +166,7 @@ def dataframe_home_carga(
                         key_prefix=f"delete_carga_{datetime.now().strftime('%Y%m%d%H%M%S')}",
                     )
 
-    return event
+    return event, df_filtrado
 
 
 # --------------------------------------------------
@@ -247,19 +299,19 @@ def icaro_carga_template(
         df_carga = df_carga.sort_values(
             by=["fecha", "nro_comprobante"], ascending=False
         ).reset_index(drop=True)
-        event = dataframe_home_carga(df_carga, key=f"{key}_df_carga")
+        event, df_filtrado = dataframe_home_carga(df_carga, key=f"{key}_df_carga")
 
         # 2. Lógica de filtrado dinámico
         # Verificamos si hay alguna fila seleccionada
         if len(event.selection.rows) > 0:
             selected_row_index = event.selection.rows[0]
             # Extraemos el id_carga de esa fila
-            selected_id = df_carga.iloc[selected_row_index]["id_carga"]
+            selected_id = df_filtrado.iloc[selected_row_index]["id_carga"]
 
             # st.info(f"Mostrando detalles para ID Carga: **{selected_id}**")
             with st.container(horizontal=True, border=False, width="stretch"):
                 df_ret_filtrado = df_ret[df_ret["id_carga"] == selected_id]
-                df_carga_filtrado = df_carga[df_carga["id_carga"] == selected_id]
+                df_carga_filtrado = df_filtrado[df_filtrado["id_carga"] == selected_id]
                 df_carga_filtrado["importe"] = df_carga_filtrado["importe"].apply(
                     formato_moneda_ar
                 )

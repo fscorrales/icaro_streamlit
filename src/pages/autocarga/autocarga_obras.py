@@ -116,6 +116,7 @@ def render() -> None:
                     key=f"f_importe_min_{REPORTE_OBRAS}",
                 )
 
+            # 2. Aplicamos los filtros en cascada sobre el DataFrame (Frontend Puro)
             if f_beneficiario:
                 df_filtrado = df_filtrado[
                     df_filtrado["beneficiario"]
