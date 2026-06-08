@@ -46,7 +46,7 @@ def render() -> None:
 
     report_template(
         key=f"autocarga_{REPORTE_EPAM}",
-        title=REPORTE_EPAM.capitalize(),
+        title=REPORTE_EPAM.upper(),
         description="",
         endpoint=Endpoints.ICARO_RESUMEN_REND_OBRAS.value,
         has_export=True,
@@ -85,8 +85,60 @@ def render() -> None:
         ]
 
         with st.container(horizontal=False, border=True, width="stretch"):
+            # 1. Creamos una fila de inputs usando columnas (podés elegir cuáles indexar)
+            df_filtrado = df_epam.copy()
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                f_beneficiario = st.text_input(
+                    "Beneficiario",
+                    placeholder="Ej: MECAR",
+                    key=f"f_beneficiario_{REPORTE_EPAM}",
+                )
+            with col2:
+                f_desc_obra = st.text_input(
+                    "Descripción Obra",
+                    placeholder="Ej: Museo",
+                    key=f"f_desc_obra_{REPORTE_EPAM}",
+                )
+            with col3:
+                nro_libramiento = st.text_input(
+                    "Nro Libramiento",
+                    placeholder="Ej: 11",
+                    key=f"nro_libramiento_{REPORTE_EPAM}",
+                )
+            with col4:
+                f_importe_min = st.number_input(
+                    "Importe Bruto Mínimo",
+                    min_value=0.0,
+                    value=0.0,
+                    step=10000.0,
+                    key=f"f_importe_min_{REPORTE_EPAM}",
+                )
+
+            if f_beneficiario:
+                df_filtrado = df_filtrado[
+                    df_filtrado["beneficiario"]
+                    .astype(str)
+                    .str.contains(f_beneficiario, case=False)
+                ]
+            if f_desc_obra:
+                df_filtrado = df_filtrado[
+                    df_filtrado["desc_obra"]
+                    .astype(str)
+                    .str.contains(f_desc_obra, case=False)
+                ]
+            if nro_libramiento:
+                df_filtrado = df_filtrado[
+                    df_filtrado["libramiento"]
+                    .astype(str)
+                    .str.contains(nro_libramiento, case=False)
+                ]
+            if f_importe_min:
+                df_filtrado = df_filtrado[df_filtrado["importe_bruto"] >= f_importe_min]
+
             event = dataframe(
-                df_epam,
+                df_filtrado,
                 key=f"{REPORTE_EPAM}_df_epam",
                 height=250,
                 column_order=orden_dinamico,
@@ -123,7 +175,7 @@ def render() -> None:
             if len(event.selection.rows) > 0:
                 selected_indices = event.selection.rows
                 df_suma = (
-                    df_epam.iloc[selected_indices][
+                    df_filtrado.iloc[selected_indices][
                         ["iibb", "gcias", "suss", "lp", "importe_bruto", "importe_neto"]
                     ]
                     .sum()
@@ -156,7 +208,9 @@ def render() -> None:
 
                 coincidencias = df_obras[
                     df_obras["desc_obra"].isin(
-                        df_epam.iloc[selected_indices]["desc_obra"].unique().tolist()
+                        df_filtrado.iloc[selected_indices]["desc_obra"]
+                        .unique()
+                        .tolist()
                     )
                 ]
 
@@ -218,7 +272,7 @@ def render() -> None:
                 )
 
                 unique_beneficiarios = (
-                    df_epam.iloc[selected_indices]["beneficiario"].unique().tolist()
+                    df_filtrado.iloc[selected_indices]["beneficiario"].unique().tolist()
                 )
                 if len(unique_beneficiarios) > 1:
                     proveedor_valido = (
@@ -259,7 +313,7 @@ def render() -> None:
                     update_trigger=st.session_state.get("obras_uploader_iteration", 0)
                 )
                 unique_obras = (
-                    df_epam.iloc[selected_indices]["desc_obra"].unique().tolist()
+                    df_filtrado.iloc[selected_indices]["desc_obra"].unique().tolist()
                 )
                 if len(unique_obras) > 1:
                     obra_valida = False  # No podemos cargar si hay más de una obra diferente seleccionada
@@ -307,7 +361,7 @@ def render() -> None:
                             )
 
                 datos_epam.update(
-                    df_epam.iloc[selected_indices][
+                    df_filtrado.iloc[selected_indices][
                         ["iibb", "gcias", "suss", "lp", "importe_bruto", "importe_neto"]
                     ]
                     .sum()
@@ -315,7 +369,7 @@ def render() -> None:
                 )
                 datos_epam["importe"] = float(datos_epam["importe_bruto"])
                 datos_epam["origen"] = "EPAM"
-                datos_epam["id"] = df_epam.iloc[selected_indices]["id"].tolist()
+                datos_epam["id"] = df_filtrado.iloc[selected_indices]["id"].tolist()
 
                 # print(datos_epam)
                 if obra_valida and proveedor_valido:

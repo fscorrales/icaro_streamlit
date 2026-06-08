@@ -90,14 +90,30 @@ def render() -> None:
             col1, col2, col3, col4 = st.columns(4)
 
             with col1:
-                f_beneficiario = st.text_input("Beneficiario", placeholder="Ej: MECAR")
+                f_beneficiario = st.text_input(
+                    "Beneficiario",
+                    placeholder="Ej: MECAR",
+                    key=f"f_beneficiario_{REPORTE_OBRAS}",
+                )
             with col2:
-                f_desc_obra = st.text_input("Descripción Obra", placeholder="Ej: Museo")
+                f_desc_obra = st.text_input(
+                    "Descripción Obra",
+                    placeholder="Ej: Museo",
+                    key=f"f_desc_obra_{REPORTE_OBRAS}",
+                )
             with col3:
-                nro_certificado = st.text_input("Nro Certificado", placeholder="Ej: 11")
+                nro_certificado = st.text_input(
+                    "Nro Certificado",
+                    placeholder="Ej: 11",
+                    key=f"nro_certificado_{REPORTE_OBRAS}",
+                )
             with col4:
                 f_importe_min = st.number_input(
-                    "Importe Bruto Mínimo", min_value=0.0, value=0.0, step=10000.0
+                    "Importe Bruto Mínimo",
+                    min_value=0.0,
+                    value=0.0,
+                    step=10000.0,
+                    key=f"f_importe_min_{REPORTE_OBRAS}",
                 )
 
             if f_beneficiario:
