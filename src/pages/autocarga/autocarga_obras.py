@@ -85,8 +85,44 @@ def render() -> None:
         ]
 
         with st.container(horizontal=False, border=True, width="stretch"):
+            # 1. Creamos una fila de inputs usando columnas (podés elegir cuáles indexar)
+            df_filtrado = df_certificados.copy()
+            col1, col2, col3, col4 = st.columns(4)
+
+            with col1:
+                f_beneficiario = st.text_input("Beneficiario", placeholder="Ej: MECAR")
+            with col2:
+                f_desc_obra = st.text_input("Descripción Obra", placeholder="Ej: Museo")
+            with col3:
+                nro_certificado = st.text_input("Nro Certificado", placeholder="Ej: 11")
+            with col4:
+                f_importe_min = st.number_input(
+                    "Importe Bruto Mínimo", min_value=0.0, value=0.0, step=10000.0
+                )
+
+            if f_beneficiario:
+                df_filtrado = df_filtrado[
+                    df_filtrado["beneficiario"]
+                    .astype(str)
+                    .str.contains(f_beneficiario, case=False)
+                ]
+            if f_desc_obra:
+                df_filtrado = df_filtrado[
+                    df_filtrado["desc_obra"]
+                    .astype(str)
+                    .str.contains(f_desc_obra, case=False)
+                ]
+            if nro_certificado:
+                df_filtrado = df_filtrado[
+                    df_filtrado["nro_certificado"]
+                    .astype(str)
+                    .str.contains(nro_certificado, case=False)
+                ]
+            if f_importe_min:
+                df_filtrado = df_filtrado[df_filtrado["importe_bruto"] >= f_importe_min]
+
             event = dataframe(
-                df_certificados,
+                df_filtrado,
                 key=f"{REPORTE_OBRAS}_df_certificados",
                 height=250,
                 column_order=orden_dinamico,
