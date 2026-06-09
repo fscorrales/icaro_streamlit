@@ -45,29 +45,35 @@ def dataframe_home_carga(
     ):
         # 1. Creamos una fila de inputs usando columnas (podés elegir cuáles indexar)
         df_filtrado = df_carga.copy()
-        col1, col2, col3, col4 = st.columns(4)
+        col1, col2, col3, col4, col5 = st.columns(5)
 
         with col1:
-            f_cuit = st.text_input(
-                "CUIT",
-                placeholder="Ej: MECAR",
-                key=f"f_cuit_{REPORTE}",
+            f_id_carga = st.text_input(
+                "Id Carga",
+                placeholder="Ej: 1175",
+                key=f"f_id_carga_{REPORTE}",
             )
         with col2:
+            f_cuit = st.text_input(
+                "CUIT",
+                placeholder="Ej: 20632351514",
+                key=f"f_cuit_{REPORTE}",
+            )
+        with col3:
             f_desc_obra = st.text_input(
                 "Descripción Obra",
                 placeholder="Ej: Museo",
                 key=f"f_desc_obra_{REPORTE}",
             )
-        with col3:
-            nro_certificado = st.text_input(
-                "Nro Certificado",
-                placeholder="Ej: 11",
-                key=f"nro_certificado_{REPORTE}",
-            )
         with col4:
+            f_actividad = st.text_input(
+                "Actividad",
+                placeholder="Ej: 11",
+                key=f"f_actividad_{REPORTE}",
+            )
+        with col5:
             f_importe_min = st.number_input(
-                "Importe Bruto Mínimo",
+                "Importe Mínimo",
                 min_value=0.0,
                 value=0.0,
                 step=10000.0,
@@ -75,6 +81,10 @@ def dataframe_home_carga(
             )
 
         # 2. Aplicamos los filtros en cascada sobre el DataFrame (Frontend Puro)
+        if f_id_carga:
+            df_filtrado = df_filtrado[
+                df_filtrado["id_carga"].astype(str).str.contains(f_id_carga, case=False)
+            ]
         if f_cuit:
             df_filtrado = df_filtrado[
                 df_filtrado["cuit"].astype(str).str.contains(f_cuit, case=False)
@@ -85,11 +95,11 @@ def dataframe_home_carga(
                 .astype(str)
                 .str.contains(f_desc_obra, case=False)
             ]
-        if nro_certificado:
+        if f_actividad:
             df_filtrado = df_filtrado[
-                df_filtrado["nro_certificado"]
+                df_filtrado["actividad"]
                 .astype(str)
-                .str.contains(nro_certificado, case=False)
+                .str.contains(f_actividad, case=False)
             ]
         if f_importe_min:
             df_filtrado = df_filtrado[df_filtrado["importe"] >= f_importe_min]

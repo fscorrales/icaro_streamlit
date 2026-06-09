@@ -109,7 +109,7 @@ def render() -> None:
                 )
             with col4:
                 f_importe_min = st.number_input(
-                    "Importe Bruto Mínimo",
+                    "Importe Mínimo",
                     min_value=0.0,
                     value=0.0,
                     step=10000.0,
