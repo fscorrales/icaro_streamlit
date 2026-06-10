@@ -68,7 +68,7 @@ def dataframe_home_carga(
         with col4:
             f_actividad = st.text_input(
                 "Actividad",
-                placeholder="Ej: 11",
+                placeholder="Ej: 11-00-02-79",
                 key=f"f_actividad_{REPORTE}",
             )
         with col5:
