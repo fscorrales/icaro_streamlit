@@ -5,10 +5,10 @@ __all__ = ["build_retenciones_payload", "formato_moneda_ar"]
 def build_retenciones_payload(data: dict) -> dict:
     # Mapeo de campos del objeto a códigos contables de ICARO
     mapeo_codigos = {
-        "iibb": "112",
+        "iibb": "110",
         "gcias": "113",
         "suss": "114",
-        "lp": "110",
+        "lp": "112",
         "invico": "337",
     }
 
