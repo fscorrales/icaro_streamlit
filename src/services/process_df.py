@@ -235,6 +235,7 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
     df = df.assign(
         id_carga="",
         ejercicio=periodo_valor,
+        origen="CERTIFICADOS",
         # Lógica de desplazamiento
         beneficiario=np.where(mask_totales, df["21"], np.nan),
         desc_obra=np.where(mask_totales, df["22"], df["21"]),
@@ -296,6 +297,7 @@ def process_certificados_obras(dataframe: pd.DataFrame) -> pd.DataFrame:
             "invico",
             "retenciones",
             "importe_neto",
+            "origen",
             "id_carga",
         ],
     ]

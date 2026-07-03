@@ -305,7 +305,7 @@ def render() -> None:
                         )
 
                 datos_obras["importe"] = float(datos_obras["importe_bruto"])
-                datos_obras["origen"] = "Obras"
+                datos_obras["origen"] = "CERTIFICADOS"
                 # print(datos_obras)
                 if obra_valida and proveedor_valido:
                     modal_comprobante_gasto(
