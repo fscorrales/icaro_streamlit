@@ -177,7 +177,15 @@ def render() -> None:
                 selected_indices = event.selection.rows
                 df_suma = (
                     df_filtrado.iloc[selected_indices][
-                        ["iibb", "gcias", "suss", "lp", "importe_bruto", "importe_neto"]
+                        [
+                            "iibb",
+                            "sellos",
+                            "gcias",
+                            "suss",
+                            "lp",
+                            "importe_bruto",
+                            "importe_neto",
+                        ]
                     ]
                     .sum()
                     .to_dict()
@@ -363,7 +371,15 @@ def render() -> None:
 
                 datos_epam.update(
                     df_filtrado.iloc[selected_indices][
-                        ["iibb", "gcias", "suss", "lp", "importe_bruto", "importe_neto"]
+                        [
+                            "iibb",
+                            "sellos",
+                            "gcias",
+                            "suss",
+                            "lp",
+                            "importe_bruto",
+                            "importe_neto",
+                        ]
                     ]
                     .sum()
                     .to_dict()

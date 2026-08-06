@@ -6,6 +6,7 @@ def build_retenciones_payload(data: dict) -> dict:
     # Mapeo de campos del objeto a códigos contables de ICARO
     mapeo_codigos = {
         "iibb": "110",
+        "sellos": "111",
         "gcias": "113",
         "suss": "114",
         "lp": "112",
