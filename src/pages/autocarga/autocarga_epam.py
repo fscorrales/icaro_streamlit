@@ -242,7 +242,11 @@ def render() -> None:
 
                 valor_importe_bruto = formato_moneda_ar(df_suma["importe_bruto"])
                 valor_retenciones = formato_moneda_ar(
-                    df_suma["iibb"] + df_suma["gcias"] + df_suma["suss"] + df_suma["lp"]
+                    df_suma["iibb"]
+                    + df_suma["gcias"]
+                    + df_suma["suss"]
+                    + df_suma["lp"]
+                    + df_suma["sellos"]
                 )
                 valor_importe_neto = formato_moneda_ar(df_suma["importe_neto"])
 
