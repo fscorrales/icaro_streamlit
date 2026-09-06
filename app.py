@@ -98,6 +98,11 @@ def build_navigation() -> None:
             title="Proveedores",
             icon="👷‍♂️",
         ),
+        st.Page(
+            "src/pages/control_icaro/control_icaro.py",
+            title="Control Icaro",
+            icon="🏗️",
+        ),
     ]
 
     # 2. Agregamos páginas extra según el rol (sin crear una sección nueva)

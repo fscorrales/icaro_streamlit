@@ -56,8 +56,7 @@ def _get_headers(token: Optional[str] = None) -> dict[str, str]:
 
 # --------------------------------------------------
 def fetch_data(
-    endpoint: str,
-    params: Optional[dict[str, Any]] = None,
+    endpoint: str, params: Optional[dict[str, Any]] = None, token: Optional[str] = None
 ) -> list[dict[str, Any]]:
     """
     Realiza un GET genérico a la API y retorna la lista de registros.
@@ -73,7 +72,7 @@ def fetch_data(
         APIConnectionError: Si no hay conexión.
         APIResponseError: Si la API retorna un error.
     """
-    headers = _get_headers()
+    headers = _get_headers(token=token)
     clean_params = (
         {k: v for k, v in params.items() if v is not None} if params else None
     )
@@ -94,15 +93,14 @@ def fetch_data(
 
 # --------------------------------------------------
 def fetch_dataframe(
-    endpoint: str,
-    params: Optional[dict[str, Any]] = None,
+    endpoint: str, params: Optional[dict[str, Any]] = None, token: Optional[str] = None
 ) -> pd.DataFrame:
     """
     Realiza un GET y retorna los datos como pd.DataFrame.
 
     Si no hay datos, retorna un DataFrame vacío.
     """
-    data = fetch_data(endpoint, params)
+    data = fetch_data(endpoint, params, token=token)
     if not data:
         return pd.DataFrame()
     return pd.DataFrame(data)
