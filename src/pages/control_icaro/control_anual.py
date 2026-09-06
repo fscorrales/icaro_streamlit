@@ -17,20 +17,37 @@ import pandas as pd
 import streamlit as st
 
 from src.components import dataframe
-from src.constants.endpoints import Endpoints
-from src.services import get_control_icaro_anual, get_ejercicios
+from src.constants import Endpoints, get_ejercicios_list
+from src.services import fetch_dataframe
 from src.utils import (
     APIConnectionError,
     APIResponseError,
 )
 from src.views import (
-    report_template,
+    report_template_with_filters,
     request_siif_credentials_modal,
 )
 
-ENDPONT = Endpoints.CONTROL_ICARO_ANUAL.value
+ENDPONT = Endpoints.CONTROL_ICARO.value
 REPORTE = "control_icaro_anual"
 URL_SHEET = "https://docs.google.com/spreadsheets/d/1KKeeoop_v_Nf21s7eFp4sS6SmpxRZQ9DPa1A5wVqnZ0"
+
+
+# --------------------------------------------------
+@st.cache_data(show_spinner="Consultando base de datos...", ttl="1d")
+def get_control_icaro_anual(
+    params: dict[str, Any] | None = None, update_trigger: int = 0
+):
+    df = pd.DataFrame()
+
+    df = fetch_dataframe(ENDPONT + "/computeControlAnual", params=params)
+    # if not df.empty:
+    #     df = df.sort_values(
+    #         ["ejercicio", "mes", "grupo", "cta_cte"],
+    #         ascending=[False, True, True, True],
+    #     )
+
+    return df
 
 
 # --------------------------------------------------
@@ -41,14 +58,14 @@ def render(
     mis_filtros = [
         {
             "label": "Elija los ejercicios a consultar",
-            "options": get_ejercicios(),
+            "options": get_ejercicios_list(),
             "query_param": "ejercicio",
             "key": "ejercicios_" + REPORTE,
-            "default": get_ejercicios()[-1],
+            "default": get_ejercicios_list()[-1],
         },
     ]
 
-    report_template(
+    report_template_with_filters(
         key=REPORTE,
         title=REPORTE.replace("_", " ").title(),
         endpoint=ENDPONT,
