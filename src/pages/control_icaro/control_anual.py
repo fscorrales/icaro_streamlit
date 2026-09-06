@@ -28,7 +28,7 @@ from src.views import (
     request_siif_credentials_modal,
 )
 
-ENDPONT = Endpoints.CONTROL_ICARO.value
+ENDPOINT = Endpoints.CONTROL_ICARO.value
 REPORTE = "control_icaro_anual"
 URL_SHEET = "https://docs.google.com/spreadsheets/d/1KKeeoop_v_Nf21s7eFp4sS6SmpxRZQ9DPa1A5wVqnZ0"
 
@@ -40,7 +40,7 @@ def get_control_icaro_anual(
 ):
     df = pd.DataFrame()
 
-    df = fetch_dataframe(ENDPONT + "/computeControlAnual", params=params)
+    df = fetch_dataframe(ENDPOINT + "/computeControlAnual", params=params)
     # if not df.empty:
     #     df = df.sort_values(
     #         ["ejercicio", "mes", "grupo", "cta_cte"],
@@ -68,7 +68,7 @@ def render(
     report_template_with_filters(
         key=REPORTE,
         title=REPORTE.replace("_", " ").title(),
-        endpoint=ENDPONT,
+        endpoint=ENDPOINT,
         description=f"La automatización y la exportación impactan en los 3 subreportes/pestañas. Datos exportados en [Google Sheet]({URL_SHEET}).",
         filters_config=mis_filtros,
         update_func=lambda: request_siif_credentials_modal(
