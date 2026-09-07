@@ -1,11 +1,12 @@
 __all__ = [
     "report_template",
+    "report_template_with_filters",
     "params_preparation",
     "dataframe_with_buttons",
 ]
 
 import time
-from typing import Any
+from typing import Any, Optional
 
 import pandas as pd
 import streamlit as st
@@ -16,7 +17,9 @@ from src.components import (
     button_edit,
     button_export,
     button_submit,
+    button_update,
     dataframe,
+    multiselect_filter,
     text_input_advance_filter,
 )
 from src.services import (
@@ -252,3 +255,117 @@ def dataframe_with_buttons(
                             selected_row_index = event.selection.rows[0]
                             datos_eliminar = df.iloc[selected_row_index].to_dict()
                             delete_func(datos_eliminar)
+
+
+@st.fragment  # Permite que los filtros internos no recarguen TODA la página
+# --------------------------------------------------
+def report_template_with_filters(
+    key: str,
+    title: str,
+    endpoint: str,
+    description: str,
+    filters_config: list,
+    update_func: Optional[Any] = None,
+    allow_no_filters: bool = False,
+    has_update: bool = True,
+    has_export: bool = True,
+    export_endpoint: Optional[str] = None,
+    allow_extra_options: bool = False,
+    has_advanced_filter: bool = True,
+    max_selections: Optional[int] = None,
+):
+    """
+    Vista reutilizable.
+    filters_config: Lista de dicts con ['label', 'options', 'key', 'default']
+    """
+    st.markdown(f"# {title}")
+    st.write(description)
+
+    selections = []
+    filtro_avanzado = ""
+
+    # 0. Lógica de Exportación
+    def download_file():
+        # Validamos filtros antes de proceder
+        if all(s[1] is not None for s in selections):
+            try:
+                # Limpiamos basura anterior antes de empezar el proceso pesado
+                if f"temp_file_{key}" in st.session_state:
+                    del st.session_state[f"temp_file_{key}"]
+                with st.spinner("Preparando archivos Excel..."):
+                    # Llamada a la API que devuelve StreamingResponse
+                    excel_binario = fetch_excel_stream(
+                        endpoint + "/export"
+                        if export_endpoint is None
+                        else export_endpoint,
+                        params_preparation(selections, filtro_avanzado),
+                    )
+
+                    if excel_binario:
+                        # IMPORTANTE: Como st.download_button recarga la página,
+                        # a veces es mejor usar un link o guardarlo en session_state
+                        st.session_state[f"temp_file_{key}"] = excel_binario
+                        st.success("✅ Archivo generado con éxito.")
+                        st.rerun()
+
+            except Exception as e:
+                st.error(f"Error al exportar: {e}")
+
+    # 1. Renderizar Filtros
+    # --- Filtros (Estado local del componente) ---
+    with st.container(horizontal=True, vertical_alignment="bottom"):
+        for i, f_conf in enumerate(filters_config):
+            # Guardamos la selección en un diccionario para la API
+            val = multiselect_filter(
+                label=f_conf["label"],
+                options=f_conf["options"],
+                default=f_conf.get("default", []),
+                accept_new_options=allow_extra_options,
+                key=f_conf["key"],  # Key única para evitar conflictos en Streamlit
+                max_selections=max_selections,  # Permite limitar el número de selecciones
+            )
+            # El nombre de la clave aquí debe coincidir con lo que espera tu API
+            selections.append((f_conf["query_param"], val))
+
+        if has_advanced_filter:
+            filtro_avanzado = text_input_advance_filter(
+                key="text_input_advance_filter-" + key
+            )
+
+        if has_update:
+            if button_update("Actualizador automático", key=f"button_update_{key}"):
+                if update_func:
+                    update_func()
+
+        if has_export:
+            # Aquí podrías integrar tu logic de exportación
+            if f"temp_file_{key}" not in st.session_state:
+                if button_export("Exportar a Excel y GS", key=f"button_export_{key}"):
+                    download_file()
+            else:
+                # Si hay archivo, el botón "Exportar" desaparece y aparece el de "Descargar"
+                st.download_button(
+                    label="📥 GUARDAR EXCEL",
+                    data=st.session_state[f"temp_file_{key}"],
+                    file_name=f"reporte_{key}.xlsx",
+                    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                    key=f"btn_dl_{key}",
+                    type="primary",  # Lo ponemos en color para que resalte
+                    on_click=lambda: st.session_state.pop(f"temp_file_{key}"),
+                )
+
+    # 2. Validar que no haya filtros vacíos
+    if not allow_no_filters:
+        if any(not s[1] for s in selections):
+            st.warning(
+                "Seleccione al menos un valor en cada filtro obligatorio. El filtro avanzado es opcional"
+            )
+            return
+
+    # 3. Llamada a la API
+    params = params_preparation(selections, filtro_avanzado)
+
+    # Sincronizamos con el session_state para que 'render' lo vea
+    if st.session_state.get(f"{key}_advanced_filter") != params:
+        st.session_state[f"{key}_advanced_filter"] = params
+        st.rerun()

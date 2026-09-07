@@ -7,6 +7,7 @@ __all__ = [
     "button_edit",
     "button_delete",
     "button_selfadd",
+    "button_robot",
 ]
 
 import streamlit as st
@@ -79,3 +80,12 @@ def button_selfadd(label: str, key: str = "button_selfadd", **kwargs):
     """Un componente reutilizable"""
     with st.container(border=False, width="content"):
         return st.button("🔮 " + label, key=key, width=DEFAULT_WIDTH, **kwargs)
+
+
+# --------------------------------------------------
+def button_robot(label: str, key: str = "button_robot", **kwargs):
+    """Un componente reutilizable"""
+    with st.container(border=False, width="content"):
+        return st.button(
+            "📎 " + label, key=key, width=DEFAULT_WIDTH, **kwargs, type="primary"
+        )

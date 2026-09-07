@@ -31,9 +31,9 @@ def build():
         "--collect-all=httpx",
         "--collect-all=pydantic_settings",
         "--collect-all=typer",
-        # "--collect-all=playwright",
+        "--collect-all=playwright",
         "--copy-metadata=streamlit",
-        # "--copy-metadata=playwright",
+        "--copy-metadata=playwright",
         # Inclusión de archivos y carpetas
         f"--add-data={STREAMLIT_APP}{os.pathsep}.",
         f"--add-data={SRC_DIR}{os.pathsep}{SRC_DIR}",

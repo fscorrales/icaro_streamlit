@@ -4,15 +4,18 @@ __all__ = [
     "modal_obras",
     "modal_estructura",
     "modal_delete_registro_gral",
+    "request_siif_credentials_modal",
 ]
 
+import time
 from datetime import date, datetime
+from typing import Callable
 
 import pandas as pd
 import streamlit as st
 
 import src.utils.exceptions as ex
-from src.components import button_cancel, button_submit
+from src.components import button_cancel, button_robot, button_submit
 from src.constants import Endpoints
 from src.services import (
     delete_request,
@@ -1282,3 +1285,91 @@ def modal_estructura(
                         st.error(f"❌ Error: {e}")
                     except Exception as e:
                         st.error(f"❌ Ocurrió un error inesperado. {e}")
+
+
+@st.dialog("Credenciales SIIF")
+# --------------------------------------------------
+def request_siif_credentials_modal(
+    automation_callback: Callable[[str, str, str], None],
+    key: str = "",
+    downloaded_info: str = "-",
+):
+    """
+    Modal reutilizable para solicitar credenciales del SIIF.
+    automation_callback recibe (username, password, key).
+    """
+    st.write("Ingrese sus credenciales de SIIF para iniciar la descarga.")
+    username = st.text_input("Usuario")
+    password = st.text_input("Contraseña", type="password")
+    st.write("**Reportes ha descargar:** " + downloaded_info)
+
+    with st.container(
+        horizontal=True, border=False, horizontal_alignment="center", gap="large"
+    ):
+        if button_cancel("Cancelar", type="secondary", key=f"{key}_btn_cancel"):
+            st.rerun()  # Cierra el modal de forma segura
+
+        if button_robot("Ejecutar", key=f"{key}_btn_robot"):
+            if not username or not password:
+                st.error("Debe ingresar usuario y contraseña.")
+                return
+
+            try:
+                with st.spinner("Ejecutando automatización..."):
+                    st.info("Automatización iniciada. Por favor, espere...")
+
+                    import asyncio
+                    import sys
+
+                    # SOLUCIÓN PARA WINDOWS
+                    if sys.platform == "win32":
+                        asyncio.set_event_loop_policy(
+                            asyncio.WindowsProactorEventLoopPolicy()
+                        )
+
+                    async def run_automation():
+                        return await automation_callback(username, password, key)
+
+                try:
+                    results = asyncio.run(run_automation())
+                except RuntimeError:
+                    # Si ya hay un loop corriendo (común en Streamlit)
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+                    results = loop.run_until_complete(run_automation())
+
+                st.success(f"Proceso finalizado: {len(results)} reportes procesados.")
+                st.session_state[f"{key}_automation_success"] = True
+                time.sleep(1)
+                st.rerun()
+                # st.success("✅ Proceso de actualización completado")
+
+                # # Creamos un contenedor expandible para no ensuciar la vista si todo salió bien
+                # with st.expander("Ver detalle del procesamiento", expanded=True):
+                #     # Mostramos métricas rápidas
+                #     c1, c2, c3 = st.columns(3)
+                #     total_added = sum(r["added"] for r in results)
+                #     total_deleted = sum(r["deleted"] for r in results)
+                #     total_errors = sum(len(r["errors"]) for r in results)
+
+                #     c1.metric("Registros Agregados", total_added)
+                #     c2.metric("Registros Eliminados", total_deleted)
+                #     c3.metric("Errores detectados", total_errors, delta_color="inverse")
+
+                #     # Si hay errores, los mostramos en una tabla o lista roja
+                #     if total_errors > 0:
+                #         st.markdown("---")
+                #         st.error("⚠️ Algunos registros no pudieron procesarse:")
+                #         for res in results:
+                #             for err in res["errors"]:
+                #                 st.write(
+                #                     f"**Doc ID {err['doc_id']}:** {err['details'][0]['msg']}"
+                #                 )
+
+            except Exception as e:
+                st.error(f"Error durante la automatización: {e}")
+                st.session_state[f"{key}_automation_success"] = False
+
+        st.write(
+            "**Debe esperar a que este MODAL se cierre automáticamente al finalizar la automatización.**"
+        )

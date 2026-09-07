@@ -3,10 +3,16 @@ __all__ = [
     "process_resumen_rend_prov",
     "process_certificados_obras",
     "process_listado_proveedores",
+    "cta_cte_unifier",
 ]
+
+from typing import Optional
 
 import numpy as np
 import pandas as pd
+
+from src.constants import Endpoints
+from src.services import fetch_dataframe
 
 
 # --------------------------------------------------
@@ -345,5 +351,38 @@ def process_listado_proveedores(dataframe: pd.DataFrame) -> pd.DataFrame:
             "condicion_iva",
         ],
     ]
+
+    return df
+
+
+# --------------------------------------------------
+def cta_cte_unifier(
+    original_df: pd.DataFrame, cta_cte_nexo: str, token: Optional[str] = None
+) -> pd.DataFrame:
+    """
+    Map cta_cte in original_df to map_to in Ctas Ctes collection using cta_cte_nexo.
+    If no match is found, the original cta_cte value is preserved.
+    """
+    if original_df.empty:
+        return original_df
+
+    ctas_ctes = fetch_dataframe(
+        Endpoints.CTAS_CTES.value, params={"limit": 0}, token=token
+    )
+
+    if ctas_ctes.empty or cta_cte_nexo not in ctas_ctes.columns:
+        return original_df
+
+    df = original_df.copy()
+
+    # 🔹 Opción A (Recomendada): Usar map() para una homologación directa sin alterar la estructura del DF
+    mapping = (
+        ctas_ctes.dropna(subset=[cta_cte_nexo])
+        .drop_duplicates(subset=[cta_cte_nexo])
+        .set_index(cta_cte_nexo)["map_to"]
+    )
+
+    # Reemplaza valores con el mapa; si no encuentra coincidencia (NaN), conserva la cta_cte original
+    df["cta_cte"] = df["cta_cte"].map(mapping).fillna(df["cta_cte"])
 
     return df
