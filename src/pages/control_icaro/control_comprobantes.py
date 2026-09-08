@@ -75,6 +75,7 @@ def render(automation_func: Optional[Any] = None) -> None:
             downloaded_info="SIIF's rf602, rf610, gto_rpa03g, rcg01_uejp y rfondo07tp",
         ),
         export_endpoint=Endpoints.CONTROL_ICARO.value + "/export",
+        max_selections=1,
     )
 
     if st.session_state.get(f"{REPORTE}_automation_success"):
