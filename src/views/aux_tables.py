@@ -333,7 +333,7 @@ def report_template_with_filters(
             )
 
         if has_update:
-            if button_update("Actualizador automático", key=f"button_update_{key}"):
+            if button_update("Actualizar Fuentes", key=f"button_update_{key}"):
                 if update_func:
                     update_func()
 

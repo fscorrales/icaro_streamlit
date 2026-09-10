@@ -103,6 +103,11 @@ def build_navigation() -> None:
             title="Control Icaro",
             icon="🏗️",
         ),
+        st.Page(
+            "src/pages/reportes/reportes_main.py",
+            title="Reportes",
+            icon="📒",
+        ),
     ]
 
     # 2. Agregamos páginas extra según el rol (sin crear una sección nueva)
