@@ -2,7 +2,7 @@
 
 import streamlit as st
 
-from src.pages.reportes import carga_with_desc_prov, group_desc_siif
+from src.pages.reportes import acum_desc_siif, carga_with_desc_prov
 
 
 def main() -> None:
@@ -10,7 +10,7 @@ def main() -> None:
         ["Carga Agrupada", "Carga Con Desc. Prov."]
     )
     with tab_group_desc_siif:
-        group_desc_siif.render()
+        acum_desc_siif.render()
 
     with tab_carga_with_desc_prov:
         carga_with_desc_prov.render()

@@ -14,13 +14,13 @@ from src.utils import (
 )
 from src.views import report_template_with_filters, request_siif_credentials_modal
 
-ENDPOINT = Endpoints.ICARO_CARGA.value + "/groupDescSIIF"
-REPORTE = "reporte_group_desc_siif"
+ENDPOINT = Endpoints.ICARO_CARGA.value + "/acumDescSIIF"
+REPORTE = "reporte_acum_desc_siif"
 
 
 # --------------------------------------------------
 @st.cache_data(show_spinner="Consultando base de datos...", ttl="1d")
-def get_group_desc_siif_report(
+def get_acum_desc_siif_report(
     params: dict[str, Any] | None = None, update_trigger: int = 0
 ):
     df = pd.DataFrame()
@@ -89,7 +89,8 @@ def render() -> None:
         description="Reporte de Ejecución acumulado anual por Obra",
         endpoint=ENDPOINT,
         filters_config=mis_filtros,
-        has_export=False,
+        has_export=True,
+        export_endpoint=ENDPOINT + "/export",
         has_update=True,
         update_func=lambda: request_siif_credentials_modal(
             run_automation, key=REPORTE, downloaded_info="SIIF's rf610"
@@ -104,7 +105,7 @@ def render() -> None:
     df = pd.DataFrame()
 
     try:
-        df = get_group_desc_siif_report(
+        df = get_acum_desc_siif_report(
             filtro_actual,
             update_trigger=trigger,
         )
@@ -134,6 +135,6 @@ def render() -> None:
 
         dataframe(
             df,
-            key=f"{REPORTE}_df_group_desc_siif",
+            key=f"{REPORTE}_df_acum_desc_siif",
             column_order=orden_dinamico,
         )
