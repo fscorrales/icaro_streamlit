@@ -11,6 +11,12 @@ SRC_DIR = "src"  # Carpeta con tu lógica y .env
 STREAMLIT_CONFIG = ".streamlit"
 ICON_FILE = "wings_logo.ico"  # El archivo de icono de la app
 
+# HIDDEN_IMPORTS = [
+#     "src.automation.sscc.banco_invico_runner",
+#     "src.automation.sgf.resumen_rend_obras_runner",
+#     "src.automation.sgf.resumen_rend_prov_runner",
+# ]
+
 
 def build():
     # 1. Limpiar carpetas de compilaciones previas
@@ -24,6 +30,7 @@ def build():
         ENTRY_POINT,
         f"--name={APP_NAME}",
         "--onefile",
+        "--clean",
         # "--windowed",  # Para que no se abra una consola negra detrás (opcional)
         "--additional-hooks-dir=.",
         # Recolección de librerías "rebeldes"
@@ -41,6 +48,9 @@ def build():
         f"--add-data=pyproject.toml{os.pathsep}.",
         f"--icon={ICON_FILE}",
     ]
+
+    # for module in HIDDEN_IMPORTS:
+    #     args.append(f"--hidden-import={module}")
 
     # 3. Ejecutar PyInstaller
     print(f"Iniciando compilación de {APP_NAME}...")
