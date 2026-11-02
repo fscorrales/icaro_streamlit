@@ -84,7 +84,6 @@ def build_navigation() -> None:
         st.error("Sesión no iniciada.")
         return
 
-    roles = st.session_state["user"].get("roles", ["pending"])
     username = st.session_state["user"].get("username", "Usuario")
 
     # 1. Definimos la lista base de páginas
@@ -110,17 +109,7 @@ def build_navigation() -> None:
         ),
     ]
 
-    # 2. Agregamos páginas extra según el rol (sin crear una sección nueva)
-    if "admin" in roles:
-        pages.append(
-            st.Page(
-                "src/pages/gestion_usuarios.py",
-                title="Gestión de Usuarios",
-                icon="👥",
-            )
-        )
-
-    # 3. Inicializar y ejecutar
+    # 2. Inicializar y ejecutar
     # Al pasar una lista, Streamlit no crea encabezados de sección
     pg = st.navigation(pages)
 
