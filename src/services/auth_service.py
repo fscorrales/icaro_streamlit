@@ -1,6 +1,7 @@
-__all__ = ["get_current_user", "login", "register"]
+__all__ = ["get_current_user", "has_role", "login", "register"]
 
 import httpx
+import streamlit as st
 
 import src.utils.exceptions as ex
 from src.config import settings
@@ -8,6 +9,15 @@ from src.services.models import PublicStoredUser
 
 BASE_URL = settings.BASE_URL
 DEFAULT_TIMEOUT = 60.0
+
+
+# --------------------------------------------------
+def has_role(role: str) -> bool:
+    """True si el usuario logueado tiene el rol indicado entre sus roles."""
+    user = st.session_state.get("user")
+    if not user:
+        return False
+    return role in (user.get("roles") or [])
 
 
 # --------------------------------------------------

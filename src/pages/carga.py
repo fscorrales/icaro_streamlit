@@ -22,7 +22,9 @@ from src.constants import Endpoints, get_ejercicios_list
 from src.services import (
     fetch_excel_stream,
     get_data_carga,
+    has_role,
 )
+from src.services.models import Role
 from src.utils import APIConnectionError, APIResponseError, formato_moneda_ar
 from src.views import (
     dataframe_with_buttons,
@@ -150,31 +152,32 @@ def dataframe_home_carga(
                     )  # <--- Esta es la clave
                 except Exception as e:
                     st.error(f"No se pudo encontrar la página de autocarga: {e}")
-            if button_add("Agregar", key=f"btn_add_{key}"):
-                modal_comprobante_gasto(
-                    key_prefix=f"add_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}"
-                )
-            if button_edit("Editar", key=f"btn_edit_{key}"):
-                if len(event.selection.rows) > 0:
-                    selected_row_index = event.selection.rows[0]
-                    datos_edicion = df_filtrado.iloc[selected_row_index].to_dict()
-                    print(datos_edicion)
+            if has_role(Role.icaro.value):
+                if button_add("Agregar", key=f"btn_add_{key}"):
                     modal_comprobante_gasto(
-                        key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                        datos_carga=datos_edicion,
-                        es_edicion=True,
+                        key_prefix=f"add_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}"
                     )
-            if button_delete("Borrar", key=f"btn_delete_{key}"):
-                if len(event.selection.rows) > 0:
-                    selected_row_index = event.selection.rows[0]
-                    form_data = df_filtrado.iloc[selected_row_index].to_dict()
-                    # Disparamos el modal de confirmación
-                    modal_delete_gasto(
-                        id_mongo=str(form_data.get("id")),
-                        id_carga_contable=form_data.get("id_carga"),
-                        origen=form_data.get("origen", ""),
-                        key_prefix=f"delete_carga_{datetime.now().strftime('%Y%m%d%H%M%S')}",
-                    )
+                if button_edit("Editar", key=f"btn_edit_{key}"):
+                    if len(event.selection.rows) > 0:
+                        selected_row_index = event.selection.rows[0]
+                        datos_edicion = df_filtrado.iloc[selected_row_index].to_dict()
+                        print(datos_edicion)
+                        modal_comprobante_gasto(
+                            key_prefix=f"edit_gasto_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                            datos_carga=datos_edicion,
+                            es_edicion=True,
+                        )
+                if button_delete("Borrar", key=f"btn_delete_{key}"):
+                    if len(event.selection.rows) > 0:
+                        selected_row_index = event.selection.rows[0]
+                        form_data = df_filtrado.iloc[selected_row_index].to_dict()
+                        # Disparamos el modal de confirmación
+                        modal_delete_gasto(
+                            id_mongo=str(form_data.get("id")),
+                            id_carga_contable=form_data.get("id_carga"),
+                            origen=form_data.get("origen", ""),
+                            key_prefix=f"delete_carga_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                        )
 
     return event, df_filtrado
 

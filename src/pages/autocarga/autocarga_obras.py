@@ -14,8 +14,10 @@ from src.services import (
     get_autocarga_certificados,
     get_obras,
     get_proveedores,
+    has_role,
     process_certificados_obras,
 )
+from src.services.models import Role
 from src.utils import (
     APIConnectionError,
     APIResponseError,
@@ -159,15 +161,18 @@ def render() -> None:
                     horizontal_alignment="center",
                     gap="medium",
                 ):
-                    btn_add = button_add(
-                        "Agregar", key=f"btn_add_{REPORTE_OBRAS}", type="primary"
-                    )
-                    btn_edit = button_edit(
-                        "Editar", key=f"btn_edit_{REPORTE_OBRAS}", disabled=True
-                    )
-                    btn_del = button_delete(
-                        "Borrar", key=f"btn_delete_{REPORTE_OBRAS}", disabled=True
-                    )
+                    if has_role(Role.icaro.value):
+                        btn_add = button_add(
+                            "Agregar", key=f"btn_add_{REPORTE_OBRAS}", type="primary"
+                        )
+                        btn_edit = button_edit(
+                            "Editar", key=f"btn_edit_{REPORTE_OBRAS}", disabled=True
+                        )
+                        btn_del = button_delete(
+                            "Borrar", key=f"btn_delete_{REPORTE_OBRAS}", disabled=True
+                        )
+                    else:
+                        btn_add = btn_edit = btn_del = False
 
                 # --- EL PLACEHOLDER VA AQUÍ (DEBAJO DE LOS BOTONES) ---
                 error_placeholder = st.empty()

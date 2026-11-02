@@ -24,8 +24,10 @@ from src.components import (
 )
 from src.services import (
     fetch_excel_stream,
+    has_role,
     post_request,
 )
+from src.services.models import Role
 from src.utils import read_csv_file
 
 
@@ -225,7 +227,7 @@ def dataframe_with_buttons(
             on_select="rerun" if selection_mode else "ignore",
             selection_mode=selection_mode or "multi-row",
         )
-        if show_buttons:
+        if show_buttons and has_role(Role.icaro.value):
             with st.container(
                 horizontal=True,
                 border=False,
