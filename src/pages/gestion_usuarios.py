@@ -40,7 +40,12 @@ try:
 
         # --- Aprobar usuario pendiente ---
         st.write("### Aprobar usuario pendiente")
-        pending_users = df[df["role"] == "pending"]
+        pending_users = df[
+            df["roles"].apply(
+                lambda user_roles: isinstance(user_roles, list)
+                and "pending" in user_roles
+            )
+        ]
 
         if pending_users.empty:
             st.success("No hay usuarios pendientes de aprobación.")
@@ -72,22 +77,31 @@ try:
             key="role_change_user",
         )
 
-        new_role = st.selectbox(
-            "Nuevo rol",
-            options=["user", "admin", "pending"],
-            key="role_change_role",
+        current_roles = df.loc[df["id"] == user_to_change, "roles"].iloc[0]
+        st.caption(
+            "Roles actuales: "
+            + (", ".join(current_roles) if isinstance(current_roles, list) else "-")
+        )
+
+        new_roles = st.multiselect(
+            "Nuevos roles",
+            options=["user", "admin", "eecc", "icaro", "pending"],
+            key="role_change_roles",
         )
 
         if st.button("🔄 Cambiar rol"):
-            try:
-                patch_request(
-                    f"/users/{user_to_change}/role",
-                    json_body={"role": new_role},
-                )
-                st.success("Rol actualizado exitosamente.")
-                st.rerun()
-            except (APIConnectionError, APIResponseError) as e:
-                st.error(f"Error al cambiar rol: {e}")
+            if not new_roles:
+                st.warning("Debe seleccionar al menos un rol.")
+            else:
+                try:
+                    patch_request(
+                        f"/users/{user_to_change}/role",
+                        json_body={"roles": new_roles},
+                    )
+                    st.success("Roles actualizados exitosamente.")
+                    st.rerun()
+                except (APIConnectionError, APIResponseError) as e:
+                    st.error(f"Error al cambiar roles: {e}")
 
 except APIConnectionError as e:
     st.error(f"⚠️ Error de conexión: {e}")

@@ -84,7 +84,7 @@ def build_navigation() -> None:
         st.error("Sesión no iniciada.")
         return
 
-    role = st.session_state["user"].get("role", "pending")
+    roles = st.session_state["user"].get("roles", ["pending"])
     username = st.session_state["user"].get("username", "Usuario")
 
     # 1. Definimos la lista base de páginas
@@ -111,7 +111,7 @@ def build_navigation() -> None:
     ]
 
     # 2. Agregamos páginas extra según el rol (sin crear una sección nueva)
-    if role == "admin":
+    if "admin" in roles:
         pages.append(
             st.Page(
                 "src/pages/gestion_usuarios.py",

@@ -14,6 +14,8 @@ class Role(str, Enum):
     admin = "admin"
     user = "user"
     pending = "pending"
+    eecc = "eecc"
+    icaro = "icaro"
 
 
 # -------------------------------------------------
@@ -73,19 +75,19 @@ class UserRegistrationForm(BaseModel):
 class CreateUser(BaseModel):
     username: str
     password: str
-    role: Role = Role.user
+    roles: List[Role] = [Role.user]
 
 
 # -------------------------------------------------
 class PublicStoredUser(BaseModel):
     username: str
     id: str
-    role: Role
+    roles: List[Role]
 
 
 # -------------------------------------------------
 class UpdateUserRole(BaseModel):
-    role: Role = Role.user
+    roles: List[Role] = [Role.user]
 
 
 # -------------------------------------------------
